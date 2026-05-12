@@ -11,7 +11,6 @@ class ClientModel extends Client {
     required super.email,
   });
 
-  // 1. toMap: Transforma o objeto em um "Dicionário" para o SQLite
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -23,15 +22,14 @@ class ClientModel extends Client {
     };
   }
 
-  // 2. fromMap: Pega o "Dicionário" do SQLite e transforma em objeto Dart
   factory ClientModel.fromMap(Map<String, dynamic> map) {
     return ClientModel(
-      id: map['id'],
-      name: map['name'],
-      cpfCnpj: map['cpfCnpj'],
-      address: map['address'],
-      phone: map['phone'],
-      email: map['email'],
+      id: map['id'] ?? '',
+      name: map['name'] ?? '',
+      cpfCnpj: map['cpfCnpj'] ?? '',
+      address: map['address'] ?? '',
+      phone: map['phone'] ?? '',
+      email: map['email'] ?? '',
     );
   }
 }

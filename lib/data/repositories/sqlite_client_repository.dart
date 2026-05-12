@@ -1,7 +1,7 @@
 import 'package:coolservice/data/database_helper.dart';
 import 'package:coolservice/data/models/cliente_model.dart';
 import 'package:coolservice/domain/entidades/cliente.dart';
-import 'package:coolservice/domain/repositories/i_client_repository.dart';
+import 'package:coolservice/data/repositories/i_client_repository.dart';
 import 'package:sqflite/sqflite.dart';
 
 class SQLiteClientRepository implements IClientRepository {
