@@ -11,7 +11,7 @@ class SQLiteFuncionarioRepository implements IFuncionarioRepository {
   Future<void> save(Funcionario funcionario) async {
     final db = await _dbHelper.database;
 
-    // Convertemos a Entidade recebida em Model para usar o toMap()
+    // converte  Entidade recebida em Model para usar o toMap
     final model = FuncionarioModel(
       id: funcionario.id,
       name: funcionario.name,
@@ -26,7 +26,7 @@ class SQLiteFuncionarioRepository implements IFuncionarioRepository {
       'employees', // Nome da tabela  definido no DatabaseHelper
       model.toMap(),
       conflictAlgorithm:
-          ConflictAlgorithm.replace, // Se o ID existir, ele atualiza (Update)
+          ConflictAlgorithm.replace, // Se o ID existir, ele atualiza
     );
   }
 

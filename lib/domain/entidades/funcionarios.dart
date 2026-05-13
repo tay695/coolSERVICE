@@ -1,4 +1,4 @@
-enum UserRole { admin, tecnico, funcionario }
+enum UserRole { admin, tecnico, funcionario, technician }
 
 class Funcionario {
   final String id;
