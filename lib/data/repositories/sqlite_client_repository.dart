@@ -21,12 +21,10 @@ class SQLiteClientRepository implements IClientRepository {
       email: client.email,
     );
 
-    // Comando SQL de inserção
     await db.insert(
       'clients',
       clientModel.toMap(),
-      conflictAlgorithm:
-          ConflictAlgorithm.replace, // Se o ID existir, ele atualiza
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
@@ -35,7 +33,6 @@ class SQLiteClientRepository implements IClientRepository {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query('clients');
 
-    // Transforma a lista de Maps do banco em uma lista de Objetos Client
     return List.generate(maps.length, (i) {
       return ClientModel.fromMap(maps[i]);
     });
