@@ -34,7 +34,9 @@ class FuncionarioListPage extends StatelessWidget {
             cpf: '123',
             especialty: 'Ar Condicionado',
             phone: '999',
+
             role: UserRole.funcionario,
+
             isActive: true,
           );
           viewModel.createFuncionario(novo);
