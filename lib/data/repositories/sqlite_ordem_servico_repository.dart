@@ -18,13 +18,21 @@ class SQLiteOrdemServicoRepository implements IOrdemServicoRepository {
       employeeId: ordem.employeeId,
       technicianId: ordem.technicianId,
       status: ordem.status,
+      tipoAtendimento: ordem.tipoAtendimento,
       isExternal: ordem.isExternal,
       kmDistance: ordem.kmDistance,
       serviceBasePrice: ordem.serviceBasePrice,
       kmFee: ordem.kmFee,
       totalValue: ordem.totalValue,
       observations: ordem.observations,
-      formData: ordem.formData,
+      equipamento: ordem.equipamento,
+      tipoDefeito: ordem.tipoDefeito,
+      modeloEquipamento: ordem.modeloEquipamento,
+      metragemAmbiente: ordem.metragemAmbiente,
+      tensaoEletrica: ordem.tensaoEletrica,
+      equipamentoAvaliado: ordem.equipamentoAvaliado,
+      diagnostico: ordem.diagnostico,
+      solucaoRecomendada: ordem.solucaoRecomendada,
     );
 
     // Se o ID já existir, atualiza. Se não, insere novo.

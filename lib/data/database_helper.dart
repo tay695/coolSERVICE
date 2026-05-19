@@ -53,13 +53,21 @@ class DatabaseHelper {
       employeeId TEXT NOT NULL,
       technicianId TEXT,
       status TEXT NOT NULL, 
+      tipoAtendimento TEXT NOT NULL,
       isExternal INTEGER NOT NULL DEFAULT 0,
       kmDistance REAL DEFAULT 0.0,
       serviceBasePrice REAL DEFAULT 0.0,
       kmFee REAL DEFAULT 0.0,
       totalValue REAL DEFAULT 0.0,
       observations TEXT,
-      formData TEXT, -- Aqui salvamos a List<String> como uma String JSON
+      equipamento TEXT,
+      tipoDefeito TEXT,
+      modeloEquipamento TEXT,
+      metragemAmbiente REAL,
+      tensaoEletrica REAL,
+      equipamentoAvaliado TEXT,
+      diagnostico TEXT,
+      solucaoRecomendada TEXT,
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
     )

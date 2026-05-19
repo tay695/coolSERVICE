@@ -8,13 +8,21 @@ class OrdemServicoModel extends OrdemServico {
     required super.employeeId,
     super.technicianId,
     required super.status,
+    required super.tipoAtendimento,
     required super.isExternal,
     super.kmDistance,
     super.serviceBasePrice,
     super.kmFee,
     super.totalValue,
     super.observations,
-    super.formData,
+    super.equipamento,
+    super.tipoDefeito,
+    super.modeloEquipamento,
+    super.metragemAmbiente,
+    super.tensaoEletrica,
+    super.equipamentoAvaliado,
+    super.diagnostico,
+    super.solucaoRecomendada,
   });
 
   Map<String, dynamic> toMap() {
@@ -24,13 +32,21 @@ class OrdemServicoModel extends OrdemServico {
       'employeeId': employeeId,
       'technicianId': technicianId,
       'status': status.name,
+      'tipoAtendimento': tipoAtendimento.name,
       'isExternal': isExternal ? 1 : 0,
       'kmDistance': kmDistance,
       'serviceBasePrice': serviceBasePrice,
       'kmFee': kmFee,
       'totalValue': totalValue,
       'observations': observations,
-      'formData': jsonEncode(formData),
+      'equipamento': equipamento,
+      'tipoDefeito': tipoDefeito,
+      'modeloEquipamento': modeloEquipamento,
+      'metragemAmbiente': metragemAmbiente,
+      'tensaoEletrica': tensaoEletrica,
+      'equipamentoAvaliado': equipamentoAvaliado,
+      'diagnostico': diagnostico,
+      'solucaoRecomendada': solucaoRecomendada,
     };
   }
 
@@ -41,15 +57,23 @@ class OrdemServicoModel extends OrdemServico {
       employeeId: map['employeeId'] ?? '',
       technicianId: map['technicianId'],
       status: OrderStatus.values.byName(map['status'] ?? 'open'),
+      tipoAtendimento: TipoAtendimento.values.byName(
+        map['tipoAtendimento'] ?? 'manutencao',
+      ),
       isExternal: map['isExternal'] == 1,
       kmDistance: map['kmDistance'] ?? 0.0,
       serviceBasePrice: map['serviceBasePrice'] ?? 0.0,
       kmFee: map['kmFee'] ?? 0.0,
       totalValue: map['totalValue'] ?? 0.0,
       observations: map['observations'],
-      formData: map['formData'] != null
-          ? List<String>.from(jsonDecode(map['formData']))
-          : [],
+      equipamento: map['equipamento'],
+      tipoDefeito: map['tipoDefeito'],
+      modeloEquipamento: map['modeloEquipamento'],
+      metragemAmbiente: map['metragemAmbiente'],
+      tensaoEletrica: map['tensaoEletrica'],
+      equipamentoAvaliado: map['equipamentoAvaliado'],
+      diagnostico: map['diagnostico'],
+      solucaoRecomendada: map['solucaoRecomendada'],
     );
   }
 }
