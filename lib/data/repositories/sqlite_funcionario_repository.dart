@@ -45,4 +45,15 @@ class SQLiteFuncionarioRepository implements IFuncionarioRepository {
     final db = await _dbHelper.database;
     await db.delete('employees', where: 'id = ?', whereArgs: [id]);
   }
+
+  @override
+  Future<void> toggleActive(String id, bool isActive) async {
+    final db = await _dbHelper.database;
+    await db.update(
+      'employees',
+      {'isActive': isActive ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }
