@@ -70,5 +70,16 @@ class DatabaseHelper {
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
     )
   ''');
+
+    await db.execute('''
+      CREATE TABLE services (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        basePrice REAL NOT NULL,
+        tipoAtendimento TEXT NOT NULL,
+        isExternal INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
   }
 }
