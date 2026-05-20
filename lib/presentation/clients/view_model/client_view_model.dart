@@ -35,7 +35,8 @@ class ClientViewModel extends ChangeNotifier {
           .where(
             (c) =>
                 c.name.toLowerCase().contains(query.toLowerCase()) ||
-                c.cpfCnpj.contains(query),
+                c.cpfCnpj.contains(query)||
+                 c.phone.contains(query), 
           )
           .toList();
       notifyListeners();
