@@ -31,7 +31,6 @@ class FuncionarioModel extends Funcionario {
       especialty: map['especialty'] ?? '',
       phone: map['phone'] ?? '',
       isActive: map['isActive'] == 1,
-      // Converte a String de volta para Enum
       role: UserRole.values.byName(map['role'] ?? 'employee'),
     );
   }

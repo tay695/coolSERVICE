@@ -12,7 +12,7 @@ class FuncionarioViewModel extends ChangeNotifier {
 
   Future<void> createFuncionario(Funcionario funcionario) async {
     await _repository.save(funcionario);
-    await listAll(); // Recarrega a lista
+    await listAll();
   }
 
   Future<void> updateFuncionario(Funcionario funcionario) async {
@@ -31,11 +31,10 @@ class FuncionarioViewModel extends ChangeNotifier {
                 f.cpf.contains(query),
           )
           .toList();
-      notifyListeners(); // Avisa a UI para filtrar na tela
+      notifyListeners();
     }
   }
 
-  // Carrega todos do banco
   Future<void> listAll() async {
     _funcionarios = await _repository.listAll();
     notifyListeners();

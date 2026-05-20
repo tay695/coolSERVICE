@@ -1,7 +1,6 @@
 import 'package:coolservice/domain/entidades/cliente.dart';
 
 class ClientModel extends Client {
-  // O construtor do Model passa os dados para a Entidade pai
   ClientModel({
     required super.id,
     required super.name,

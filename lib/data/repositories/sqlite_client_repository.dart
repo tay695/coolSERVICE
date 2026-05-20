@@ -11,7 +11,6 @@ class SQLiteClientRepository implements IClientRepository {
   Future<void> saveClient(Client client) async {
     final db = await _dbHelper.database;
 
-    // Transformamos a Entidade em Model para usar o toMap()
     final clientModel = ClientModel(
       id: client.id,
       name: client.name,

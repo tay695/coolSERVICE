@@ -14,7 +14,6 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDB(String filePath) async {
-    // Define o caminho do banco no dispositivo
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
     return await openDatabase(path, version: 1, onCreate: _createDB);
@@ -22,7 +21,6 @@ class DatabaseHelper {
   }
 
   Future _createDB(Database db, int version) async {
-    // Aqui você coloca o SQL puro
     await db.execute('''
       CREATE TABLE clients (
         id TEXT PRIMARY KEY,

@@ -1,3 +1,4 @@
+import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/domain/entidades/funcionarios.dart';
 import 'package:coolservice/presentation/funcionarios/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ class FuncionarioListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Funcionários')),
+      drawer: const MenuLateral(),
       body: ListView.builder(
         itemCount: viewModel.funcionarios.length,
         itemBuilder: (context, index) {
