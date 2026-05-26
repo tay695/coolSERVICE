@@ -2,6 +2,7 @@ import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/data/repositories/sqlite_funcionario_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,7 +41,9 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // TODO: navegar para home passando o funcionario logado
+    Navigator.pushReplacement(context,
+    MaterialPageRoute(builder: (_) => DashboardPage()),
+    );
   }
 
   @override
