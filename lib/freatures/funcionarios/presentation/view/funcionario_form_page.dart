@@ -1,3 +1,4 @@
+import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
       appBar: AppBar(
         title: Text(isEditing ? 'Editar Funcionário' : 'Novo Funcionário'),
       ),
+      drawer: const MenuLateral(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -59,7 +61,7 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
               controller: _phoneController,
               decoration: const InputDecoration(labelText: 'Telefone'),
             ),
-             DropdownButtonFormField<UserRole>(
+            DropdownButtonFormField<UserRole>(
               value: _selectedRole,
               decoration: const InputDecoration(labelText: 'Cargo'),
               items: UserRole.values
@@ -70,11 +72,13 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () async {
-                 final username = viewModel.generateUsername(
+                final username = viewModel.generateUsername(
                   _nomeController.text,
                   _phoneController.text,
                 );
-                final password = viewModel.generatePassword(_cpfController.text);
+                final password = viewModel.generatePassword(
+                  _cpfController.text,
+                );
                 final funcionario = Funcionario(
                   id: widget.funcionario?.id ?? DateTime.now().toString(),
                   name: _nomeController.text,
@@ -83,18 +87,20 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                   phone: _phoneController.text,
                   role: _selectedRole,
                   isActive: widget.funcionario?.isActive ?? true,
-                  username: widget.funcionario?.username ?? username, 
-                  passwordHash: widget.funcionario?.passwordHash ?? password, 
+                  username: widget.funcionario?.username ?? username,
+                  passwordHash: widget.funcionario?.passwordHash ?? password,
                 );
                 if (isEditing) {
                   await viewModel.updateFuncionario(funcionario);
                 } else {
                   await viewModel.createFuncionario(funcionario);
                 }
-                
-                  if (!isEditing) {
+
+                if (!isEditing) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login: $username | Senha: $password')),
+                    SnackBar(
+                      content: Text('Login: $username | Senha: $password'),
+                    ),
                   );
                 }
                 Navigator.pop(context);

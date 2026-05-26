@@ -1,3 +1,4 @@
+import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_form_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ class ClientListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Clientes')),
+      drawer: const MenuLateral(),
       body: Column(
         children: [
           Padding(

@@ -1,3 +1,4 @@
+import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/clientes/domain/entidades/cliente.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:flutter/material.dart';
@@ -49,6 +50,7 @@ class _ClientFormPageState extends State<ClientFormPage> {
       appBar: AppBar(
         title: Text(isEditing ? 'Editar Cliente' : 'Novo Cliente'),
       ),
+      drawer: const MenuLateral(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

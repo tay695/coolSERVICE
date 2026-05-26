@@ -1,8 +1,10 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_form_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:coolservice/core/widgets/menu_lateral.dart';
+import 'package:coolservice/core/theme/app_theme.dart';
 
 class FuncionarioListPage extends StatelessWidget {
   const FuncionarioListPage({super.key});
@@ -22,10 +24,13 @@ class FuncionarioListPage extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Buscar por nome ou CPF',
                 prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
               ),
               onChanged: (value) => viewModel.searchFuncionario(value),
             ),
           ),
+
+          // Lista de Funcionários
           Expanded(
             child: ListView.builder(
               itemCount: viewModel.funcionarios.length,
@@ -39,22 +44,28 @@ class FuncionarioListPage extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.circle,
-                        color: f.isActive ? Colors.green : Colors.red,
+                        color: f.isActive
+                            ? AppColors.active
+                            : AppColors.inactive,
                         size: 12,
                       ),
+                      const SizedBox(width: 4),
                       Switch(
                         value: f.isActive,
+                        activeThumbColor: AppColors.active,
                         onChanged: (value) =>
                             viewModel.toggleActive(f.id, value),
                       ),
+
                       IconButton(
                         icon: const Icon(Icons.edit),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FuncionarioFormPage(funcionario: f),
-                          ),
-                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const FuncionarioFormPage(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
