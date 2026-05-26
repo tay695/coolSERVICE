@@ -1,11 +1,10 @@
-import 'package:coolservice/presentation/clients/view_model/client_view_model.dart';
+import 'package:coolservice/freatures/clientes/data/repositories/sqlite_client_repository.dart';
+import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
+import 'package:coolservice/freatures/funcionarios/data/repositories/sqlite_funcionario_repository.dart';
+import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
-import 'package:coolservice/data/repositories/sqlite_client_repository.dart';
-import 'package:coolservice/data/repositories/sqlite_funcionario_repository.dart';
-import 'package:coolservice/presentation/funcionarios/view/funcionario_list_page.dart';
-import 'package:coolservice/presentation/funcionarios/view_model/funcionario_viewModel.dart'
-    show FuncionarioViewModel;
+import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
@@ -22,14 +21,14 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-  ChangeNotifierProvider(create: (_) => AppConfigViewModel(prefService)),
-  ChangeNotifierProvider(
-    create: (_) => FuncionarioViewModel(SQLiteFuncionarioRepository()),
-  ),
-  ChangeNotifierProvider(
-    create: (_) => ClientViewModel(SQLiteClientRepository()),
-  ),
-],
+        ChangeNotifierProvider(create: (_) => AppConfigViewModel(prefService)),
+        ChangeNotifierProvider(
+          create: (_) => FuncionarioViewModel(SQLiteFuncionarioRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ClientViewModel(SQLiteClientRepository()),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
