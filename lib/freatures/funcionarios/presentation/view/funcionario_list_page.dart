@@ -2,12 +2,14 @@ import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
 
 class FuncionarioListPage extends StatelessWidget {
-  const FuncionarioListPage({super.key});
+   final Funcionario funcionario;
+  const FuncionarioListPage({super.key, required this.funcionario});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,7 @@ class FuncionarioListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Funcionários')),
-      drawer: const MenuLateral(),
+      drawer: MenuLateral(funcionario: funcionario),
       body: Column(
         children: [
           Padding(
@@ -57,16 +59,16 @@ class FuncionarioListPage extends StatelessWidget {
                             viewModel.toggleActive(f.id, value),
                       ),
 
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          Navigator.of(context).push(
+                     if (funcionario.role == UserRole.admin)
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => Navigator.push(
+                            context,
                             MaterialPageRoute(
-                              builder: (_) => const FuncionarioFormPage(),
+                              builder: (_) => FuncionarioFormPage(funcionario: f),
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        ),
                     ],
                   ),
                 );
@@ -76,13 +78,15 @@ class FuncionarioListPage extends StatelessWidget {
         ],
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const FuncionarioFormPage()),
-        ),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: funcionario.role == UserRole.admin
+          ? FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FuncionarioFormPage()),
+              ),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

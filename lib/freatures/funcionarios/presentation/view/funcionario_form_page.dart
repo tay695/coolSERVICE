@@ -1,4 +1,4 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
+
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
@@ -40,7 +40,6 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
       appBar: AppBar(
         title: Text(isEditing ? 'Editar Funcionário' : 'Novo Funcionário'),
       ),
-      drawer: const MenuLateral(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

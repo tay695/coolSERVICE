@@ -7,12 +7,15 @@ import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class MenuLateral extends StatelessWidget {
-  const MenuLateral({super.key});
+   final Funcionario funcionario;
+    const MenuLateral({super.key, required this.funcionario});
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = funcionario.role == UserRole.admin;
     // Escuta a ViewModel global para saber se o Modo Escuro está ativo
     final configViewModel = context.watch<AppConfigViewModel>();
 
@@ -34,12 +37,12 @@ class MenuLateral extends StatelessWidget {
 
           //  Início
           ListTile(
-            leading: const Icon(Icons.badge),
-            title: const Text('Funcionários'),
+            leading: const Icon(Icons.home),
+            title: const Text('Início'),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const DashboardPage()),
+                MaterialPageRoute(builder: (_) => DashboardPage(funcionario: funcionario)),
               );
             },
           ),
@@ -67,26 +70,32 @@ class MenuLateral extends StatelessWidget {
           ),
 
           // Item: Funcionários
-          ListTile(
+           ListTile(
             leading: const Icon(Icons.badge),
             title: const Text('Funcionários'),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const FuncionarioListPage()),
+                MaterialPageRoute(
+                    builder: (_) =>
+                        FuncionarioListPage(funcionario: funcionario)),
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.badge),
-            title: const Text('Adicionar funcionário'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const FuncionarioFormPage()),
-              );
-            },
-          ),
+          if (isAdmin)
+            ListTile(
+              leading: const Icon(Icons.person_add_alt_1),
+              title: const Text('Adicionar funcionário'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (_) => const FuncionarioFormPage()),
+                );
+              },
+            ),
+
+         
 
 
           // Item: Serviços
@@ -101,6 +110,14 @@ class MenuLateral extends StatelessWidget {
               );
             },
           ),
+           if (isAdmin)
+            ListTile(
+              leading: const Icon(Icons.add_box),
+              title: const Text('Adicionar serviço'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
 
 
           // Item: Ordens de Serviço
