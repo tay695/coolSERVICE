@@ -16,7 +16,13 @@ class DatabaseHelper {
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+      onOpen: _ensureDB,
+    );
     //se houver alguma mudança no banco é só aumentar o número da version no openDatabase.
   }
 
@@ -73,8 +79,22 @@ class DatabaseHelper {
     )
   ''');
 
+    await _createServicesTable(db);
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createServicesTable(db);
+    }
+  }
+
+  Future<void> _ensureDB(Database db) async {
+    await _createServicesTable(db);
+  }
+
+  Future<void> _createServicesTable(Database db) async {
     await db.execute('''
-      CREATE TABLE services (
+      CREATE TABLE IF NOT EXISTS services (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT NOT NULL,

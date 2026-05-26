@@ -22,14 +22,17 @@ class ServiceModel extends Service {
   }
 
   factory ServiceModel.fromMap(Map<String, dynamic> map) {
+    String tipoBanco = map['tipoAtendimento'] ?? 'manutencao';
+    if (tipoBanco == 'visita_tecnica' || tipoBanco == 'visitatecnica') {
+      tipoBanco = 'visitaTecnica';
+    }
+
     return ServiceModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       basePrice: (map['basePrice'] as num?)?.toDouble() ?? 0.0,
-      tipoAtendimento: TipoAtendimento.values.byName(
-        map['tipoAtendimento'] ?? 'manutencao',
-      ),
+      tipoAtendimento: TipoAtendimento.values.byName(tipoBanco),
       isExternal: map['isExternal'] == 1,
     );
   }

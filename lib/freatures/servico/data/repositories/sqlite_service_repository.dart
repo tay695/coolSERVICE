@@ -29,7 +29,7 @@ class SQLiteServiceRepository implements IServiceRepository {
   Future<List<Service>> getServices() async {
     final db = await _dbHelper.database;
     final maps = await db.query('services', orderBy: 'name ASC');
-    return maps.map((m) => ServiceModel.fromMap(m)).toList();
+    return maps.map((m) => ServiceModel.fromMap(m) as Service).toList();
   }
 
   @override

@@ -1,8 +1,15 @@
+enum TipoAtendimento {
+  manutencao,
+  instalacao,
+  visitaTecnica,
+}
+
 class Service {
   final String id;
   final String name;
   final String description;
   final double basePrice;
+  final TipoAtendimento tipoAtendimento;
   final bool isExternal;
 
   Service({
@@ -10,6 +17,7 @@ class Service {
     required this.name,
     required this.description,
     required this.basePrice,
-    this.isExternal = false,
+    required this.tipoAtendimento,
+    required this.isExternal,
   });
 }

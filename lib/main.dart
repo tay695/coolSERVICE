@@ -5,7 +5,11 @@ import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:coolservice/freatures/servico/data/repositories/shared_preferences_service_repository.dart';
+import 'package:coolservice/freatures/servico/data/repositories/sqlite_service_repository.dart';
+import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:provider/provider.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
 
@@ -13,10 +17,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefService = PreferencesService();
-
-  // Instancie o seu repositório de funcionários aqui
-  final funcionarioRepository = SQLiteFuncionarioRepository();
-  final clienteRepository = SQLiteClientRepository();
 
   runApp(
     MultiProvider(
@@ -27,6 +27,13 @@ void main() async {
         ),
         ChangeNotifierProvider(
           create: (_) => ClientViewModel(SQLiteClientRepository()),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ServiceViewModel(
+            kIsWeb
+                ? SharedPreferencesServiceRepository()
+                : SQLiteServiceRepository(),
+          ),
         ),
       ],
       child: const MyApp(),

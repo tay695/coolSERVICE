@@ -2,10 +2,10 @@ import 'package:coolservice/freatures/servico/domain/entidades/service.dart';
 import 'package:coolservice/freatures/servico/domain/repositories/i_servico_repository.dart';
 import 'package:flutter/material.dart';
 
-class CatalogViewModel extends ChangeNotifier {
+class ServiceViewModel extends ChangeNotifier {
   final IServiceRepository _repository;
 
-  CatalogViewModel(this._repository);
+  ServiceViewModel(this._repository);
 
   List<Service> _services = [];
   List<Service> get services => _services;
@@ -16,9 +16,15 @@ class CatalogViewModel extends ChangeNotifier {
   Future<void> loadServices() async {
     _isLoading = true;
     notifyListeners();
-    _services = await _repository.getServices();
-    _isLoading = false;
-    notifyListeners();
+
+    try {
+      _services = await _repository.getServices();
+    } catch (e) {
+      debugPrint('Erro ao carregar serviços: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> createService(Service service) async {

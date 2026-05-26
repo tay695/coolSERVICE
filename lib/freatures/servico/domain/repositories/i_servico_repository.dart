@@ -1,4 +1,4 @@
-import 'dart:developer';
+import 'package:coolservice/freatures/servico/domain/entidades/service.dart';
 
 abstract class IServiceRepository {
   Future<void> insertService(Service service);

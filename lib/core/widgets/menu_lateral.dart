@@ -1,4 +1,5 @@
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
+import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,6 +54,19 @@ class MenuLateral extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               // Navigator.pushNamed(context, '/funcionarios');
+            },
+          ),
+
+          // Item: Serviços
+          ListTile(
+            leading: const Icon(Icons.handyman),
+            title: const Text('Serviços'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ServiceListPage()),
+              );
             },
           ),
 
