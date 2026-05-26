@@ -23,7 +23,7 @@ class FuncionarioModel extends Funcionario {
       'role': role.name,
       'isActive': isActive ? 1 : 0,
       'username': username,
-      'passwordHash': passwordHash,
+      'password_hash': passwordHash,
     };
   }
 
@@ -37,7 +37,7 @@ class FuncionarioModel extends Funcionario {
       isActive: map['isActive'] == 1,
       role: UserRole.values.byName(map['role'] ?? 'employee'),
       username: map['username'] ?? '',
-      passwordHash: map['passwordHash'] ?? '',
+      passwordHash: map['password_hash'] ?? '',
     );
   }
 }
