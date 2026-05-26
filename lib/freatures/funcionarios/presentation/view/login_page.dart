@@ -3,6 +3,10 @@ import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios
 import 'package:coolservice/freatures/funcionarios/data/repositories/sqlite_funcionario_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +21,10 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _error;
+  String hashSenha(String texto) {
+  final bytes = utf8.encode(texto);
+  return sha256.convert(bytes).toString();
+}
 
   Future<void> _login() async {
     setState(() {
@@ -30,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
     final funcionario = todos.cast<Funcionario?>().firstWhere(
       (f) =>
           f!.username == _usernameController.text.trim() &&
-          f.passwordHash == _passwordController.text.trim(),
+          f.passwordHash == hashSenha(_passwordController.text.trim()),
       orElse: () => null,
     );
 

@@ -1,5 +1,4 @@
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
-import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,28 +28,21 @@ class _SplashPageState extends State<SplashPage> {
               const Scaffold(body: Center(child: Text('Onboarding'))),
         ),
       );
-    } else {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => DashboardPage()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // verificação do modo claro e escuro
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDarkMode
-          ? AppColors.noiteArtica
-          : AppColors.brancoGelo,
+      backgroundColor: isDarkMode ? AppColors.noiteArtica : AppColors.brancoGelo,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
               'assets/images/logo.png',
-              width: 180, // Você pode ajustar o tamanho aqui
+              width: 180,
               errorBuilder: (context, error, stackTrace) {
                 return const Icon(
                   Icons.home_repair_service,
@@ -60,7 +52,6 @@ class _SplashPageState extends State<SplashPage> {
               },
             ),
             const SizedBox(height: 32),
-
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.cianoFrio),
             ),

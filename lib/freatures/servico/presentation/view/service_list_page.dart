@@ -1,4 +1,4 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
+
 import 'package:coolservice/freatures/servico/presentation/view/service_form_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +13,7 @@ class ServiceListPage extends StatefulWidget {
 
 class _ServiceListPageState extends State<ServiceListPage> {
   @override
+
   void initState() {
     super.initState();
     // Carrega os serviços quando a página é inicializada
@@ -27,7 +28,6 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Serviços')),
-      drawer: const MenuLateral(),
       body: viewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : viewModel.services.isEmpty

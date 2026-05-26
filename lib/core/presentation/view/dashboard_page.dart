@@ -1,15 +1,18 @@
 import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:flutter/material.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+  final Funcionario funcionario; 
+  const DashboardPage({super.key, required this.funcionario});
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('CoolService Dashboard')),
-      drawer: const MenuLateral(),
+      drawer: MenuLateral(funcionario: funcionario),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

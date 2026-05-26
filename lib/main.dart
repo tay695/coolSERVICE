@@ -11,8 +11,10 @@ import 'package:provider/provider.dart';
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
-import 'package:coolservice/core/splash/presentation/view/splash_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/login_page.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 
 void main() async {
@@ -20,6 +22,20 @@ void main() async {
 
   final prefService = PreferencesService();
   await prefService.disableFirstTime();
+  final bytes = utf8.encode('000000');
+final hash = sha256.convert(bytes).toString();
+final repo = SQLiteFuncionarioRepository();
+await repo.save(Funcionario(
+  id: '1',
+  name: 'Admin',
+  cpf: '00000000000',
+  especialty: 'Gestão',
+  phone: '00000000000',
+  role: UserRole.admin,
+  isActive: true,
+  username: 'admin',
+  passwordHash: hash,
+));
 
 
   // Instanciando os repositórios uma única vez na memória
