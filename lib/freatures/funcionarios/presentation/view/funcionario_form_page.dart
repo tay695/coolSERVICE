@@ -2,6 +2,8 @@ import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 class FuncionarioFormPage extends StatefulWidget {
   final Funcionario? funcionario;
@@ -75,9 +77,9 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                   _nomeController.text,
                   _phoneController.text,
                 );
-                final password = viewModel.generatePassword(
-                  _cpfController.text,
-                );
+                final password = viewModel.generatePassword(_cpfController.text);
+                final passwordHash = sha256.convert(utf8.encode(password)).toString();
+
                 final funcionario = Funcionario(
                   id: widget.funcionario?.id ?? DateTime.now().toString(),
                   name: _nomeController.text,
@@ -87,8 +89,9 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                   role: _selectedRole,
                   isActive: widget.funcionario?.isActive ?? true,
                   username: widget.funcionario?.username ?? username,
-                  passwordHash: widget.funcionario?.passwordHash ?? password,
+                  passwordHash: widget.funcionario?.passwordHash ?? passwordHash,
                 );
+
                 if (isEditing) {
                   await viewModel.updateFuncionario(funcionario);
                 } else {
@@ -96,12 +99,30 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                 }
 
                 if (!isEditing) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Login: $username | Senha: $password'),
+                  await showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Credenciais do Funcionário'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Usuário: $username'),
+                          const SizedBox(height: 8),
+                          Text('Senha: $password'),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
                     ),
                   );
                 }
+
                 Navigator.pop(context);
               },
               child: Text(isEditing ? 'Salvar' : 'Cadastrar'),

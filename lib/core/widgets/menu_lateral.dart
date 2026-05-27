@@ -23,7 +23,7 @@ class MenuLateral extends StatelessWidget {
           UserAccountsDrawerHeader(
             currentAccountPicture: const CircleAvatar(
               backgroundColor: Color.fromARGB(255, 12, 8, 8),
-              child: Icon(Icons.build, size: 35, color: Colors.blue),
+              child: Icon(Icons.build, size: 35, color: Color.fromARGB(255, 255, 255, 255)),
             ),
             accountName: const Text(
               'CoolService ',
@@ -58,16 +58,6 @@ class MenuLateral extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Adicionar clientes'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(
-                context,
-              ).push(MaterialPageRoute(builder: (_) => const ClientFormPage()));
-            },
-          ),
 
           // Item: Funcionários
           ListTile(
@@ -77,24 +67,10 @@ class MenuLateral extends StatelessWidget {
               Navigator.pop(context);
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => FuncionarioListPage(funcionario: funcionario),
-                ),
+                    builder: (_) => FuncionarioListPage(funcionario: funcionario)),
               );
             },
           ),
-          if (isAdmin)
-            ListTile(
-              leading: const Icon(Icons.person_add_alt_1),
-              title: const Text('Adicionar funcionário'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const FuncionarioFormPage(),
-                  ),
-                );
-              },
-            ),
 
           ListTile(
             leading: const Icon(Icons.handyman),
@@ -109,14 +85,6 @@ class MenuLateral extends StatelessWidget {
               );
             },
           ),
-          if (isAdmin)
-            ListTile(
-              leading: const Icon(Icons.add_box),
-              title: const Text('Adicionar serviço'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
 
           // Item: Ordens de Serviço
           ListTile(
