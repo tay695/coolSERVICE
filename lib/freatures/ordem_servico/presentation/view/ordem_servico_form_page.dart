@@ -1,9 +1,11 @@
 import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
+import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
+import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../clientes/presentation/view_model/client_view_model.dart';
-import '../../domain/entidades/ordem_servico.dart';
 
 class OrdemServicoFormPage extends StatefulWidget {
   const OrdemServicoFormPage({super.key});
@@ -17,22 +19,44 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
 
   String? _clienteSelecionadoId;
   String? _funcionarioSelecionadoId;
+  String? _servicoSelecionadoId;
 
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
   final OrderStatus _statusSelecionado = OrderStatus.open;
   bool _isExternal = false;
 
+  // Campos base
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
+  final _observationsController = TextEditingController();
+
+  // Campos específicos de Manutenção
   final _equipamentoController = TextEditingController();
-  final _defeitoController = TextEditingController();
+  final _tipoDefeitoController = TextEditingController();
+
+  // Campos específicos de Instalação
+  final _modeloEquipamentoController = TextEditingController();
+  final _metragemAmbienteController = TextEditingController();
+  final _tensaoEletricaController = TextEditingController();
+
+  // Campos específicos de Visita Técnica
+  final _equipamentoAvaliadoController = TextEditingController();
+  final _diagnosticoController = TextEditingController();
+  final _solucaoRecomendadaController = TextEditingController();
 
   @override
   void dispose() {
     _basePriceController.dispose();
     _kmDistanceController.dispose();
+    _observationsController.dispose();
     _equipamentoController.dispose();
-    _defeitoController.dispose();
+    _tipoDefeitoController.dispose();
+    _modeloEquipamentoController.dispose();
+    _metragemAmbienteController.dispose();
+    _tensaoEletricaController.dispose();
+    _equipamentoAvaliadoController.dispose();
+    _diagnosticoController.dispose();
+    _solucaoRecomendadaController.dispose();
     super.dispose();
   }
 
@@ -87,6 +111,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
           width: 1,
         ),
       ),
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,6 +136,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   Widget build(BuildContext context) {
     final viewModelClientes = context.watch<ClientViewModel>();
     final viewModelFuncionarios = context.watch<FuncionarioViewModel>();
+    final viewModelServicos = context.watch<ServiceViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -120,7 +146,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            //  header
+            // Header Card
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -133,19 +159,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
               child: Column(
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.azulCeu.withOpacity(0.18),
-                      border: Border.all(
-                        color: AppColors.azulGelo.withOpacity(0.4),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
                   const Text(
                     'Abrir ordem de serviço',
                     style: TextStyle(
@@ -162,52 +175,75 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 16),
 
+            // CARD 1: VÍNCULOS
             _buildSectionCard(
               label: 'Vínculos',
               children: [
                 DropdownButtonFormField<String>(
                   value: _clienteSelecionadoId,
                   decoration: _fieldDecoration('Selecione o cliente'),
-                  items: viewModelClientes.clients.map((cliente) {
-                    return DropdownMenuItem<String>(
-                      value: cliente.id,
-                      child: Text(cliente.name),
-                    );
-                  }).toList(),
+                  items: viewModelClientes.clients
+                      .map(
+                        (c) =>
+                            DropdownMenuItem(value: c.id, child: Text(c.name)),
+                      )
+                      .toList(),
                   validator: (value) =>
                       value == null ? 'Por favor, selecione um cliente' : null,
-                  onChanged: (novoClienteId) {
-                    setState(() => _clienteSelecionadoId = novoClienteId);
-                  },
+                  onChanged: (val) =>
+                      setState(() => _clienteSelecionadoId = val),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: _funcionarioSelecionadoId,
-                  decoration: _fieldDecoration('Alocar funcionário'),
-                  items: viewModelFuncionarios.funcionarios.map((func) {
-                    return DropdownMenuItem<String>(
-                      value: func.id,
-                      child: Text(func.name),
-                    );
-                  }).toList(),
+                  decoration: _fieldDecoration('Alocar funcionário/técnico'),
+                  items: viewModelFuncionarios.funcionarios
+                      .map(
+                        (f) =>
+                            DropdownMenuItem(value: f.id, child: Text(f.name)),
+                      )
+                      .toList(),
                   validator: (value) =>
                       value == null ? 'Por favor, aloque um funcionário' : null,
-                  onChanged: (novoFuncionarioId) {
-                    setState(
-                      () => _funcionarioSelecionadoId = novoFuncionarioId,
-                    );
+                  onChanged: (val) =>
+                      setState(() => _funcionarioSelecionadoId = val),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _servicoSelecionadoId,
+                  decoration: _fieldDecoration(
+                    'Sugestão de serviço do catálogo (Opcional)',
+                  ),
+                  items: viewModelServicos.services
+                      .map(
+                        (s) =>
+                            DropdownMenuItem(value: s.id, child: Text(s.name)),
+                      )
+                      .toList(),
+                  onChanged: (novoServicoId) {
+                    if (novoServicoId != null) {
+                      final servico = viewModelServicos.services.firstWhere(
+                        (s) => s.id == novoServicoId,
+                      );
+                      setState(() {
+                        _servicoSelecionadoId = novoServicoId;
+                        _basePriceController.text = servico.basePrice
+                            .toString();
+                        _tipoSelecionado =
+                            servico.tipoAtendimento as TipoAtendimento;
+                        _isExternal = servico.isExternal;
+                      });
+                    }
                   },
                 ),
               ],
             ),
 
-            const SizedBox(height: 12),
-
+            // CARD 2: VALORES E LOGÍSTICA
             _buildSectionCard(
-              label: 'Informações básicas',
+              label: 'Informações básicas e Valores',
               children: [
                 const Text(
                   'Tipo de atendimento',
@@ -236,37 +272,25 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                             ? AppColors.brancoPuro
                             : AppColors.azulProfundo,
                         fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w500
-                            : FontWeight.normal,
-                      ),
-                      side: BorderSide(
-                        color: isSelected
-                            ? AppColors.cianoFrio
-                            : AppColors.azulGelo,
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
                       ),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 14),
-
                 TextFormField(
                   controller: _basePriceController,
                   decoration: _fieldDecoration(
-                    'Preço base do serviço',
+                    'Preço base cobrado nesta OS',
                     prefix: 'R\$ ',
                   ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Insira o valor base' : null,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Insira o valor cobrado'
+                      : null,
                 ),
-                const SizedBox(height: 8),
-
-                // Switch externo
+                const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
                     color: isDark
@@ -283,22 +307,17 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.noiteArtica,
                       ),
                     ),
                     subtitle: const Text(
                       'Cobrar deslocamento por KM?',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.cinzaNeve,
-                      ),
+                      style: TextStyle(fontSize: 12),
                     ),
                     value: _isExternal,
                     activeColor: AppColors.cianoFrio,
                     onChanged: (valor) => setState(() => _isExternal = valor),
                   ),
                 ),
-
                 if (_isExternal) ...[
                   const SizedBox(height: 12),
                   TextFormField(
@@ -306,14 +325,100 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                     decoration: _fieldDecoration(
                       'Distância total ida/volta (km)',
                     ),
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (value) =>
+                        (_isExternal && (value == null || value.isEmpty))
+                        ? 'Insira a quilometragem'
+                        : null,
                   ),
                 ],
               ],
             ),
 
-            const SizedBox(height: 24),
+            // CAMPOS DINÂMICOS CONFORME O TIPO DE ATENDIMENTO
+            if (_tipoSelecionado == TipoAtendimento.manutencao)
+              _buildSectionCard(
+                label: 'Dados da Manutenção',
+                children: [
+                  TextFormField(
+                    controller: _equipamentoController,
+                    decoration: _fieldDecoration(
+                      'Equipamento (Ex: Ar Condicionado Janela)',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _tipoDefeitoController,
+                    decoration: _fieldDecoration('Tipo de Defeito Relatado'),
+                  ),
+                ],
+              ),
 
+            if (_tipoSelecionado == TipoAtendimento.instalacao)
+              _buildSectionCard(
+                label: 'Dados da Instalação',
+                children: [
+                  TextFormField(
+                    controller: _modeloEquipamentoController,
+                    decoration: _fieldDecoration('Modelo do Equipamento'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _metragemAmbienteController,
+                    decoration: _fieldDecoration('Metragem do Ambiente (m²)'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _tensaoEletricaController,
+                    decoration: _fieldDecoration(
+                      'Tensão Elétrica (110v / 220v)',
+                    ),
+                  ),
+                ],
+              ),
+
+            if (_tipoSelecionado == TipoAtendimento.visitaTecnica)
+              _buildSectionCard(
+                label: 'Laudo da Visita Técnica',
+                children: [
+                  TextFormField(
+                    controller: _equipamentoAvaliadoController,
+                    decoration: _fieldDecoration('Equipamento Avaliado'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _diagnosticoController,
+                    decoration: _fieldDecoration('Diagnóstico Técnico'),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _solucaoRecomendadaController,
+                    decoration: _fieldDecoration('Solução Recomendada'),
+                    maxLines: 2,
+                  ),
+                ],
+              ),
+
+            // OBSERVAÇÕES GERAIS
+            _buildSectionCard(
+              label: 'Observações Gerais',
+              children: [
+                TextFormField(
+                  controller: _observationsController,
+                  decoration: _fieldDecoration(
+                    'Notas adicionais sobre a ordem de serviço',
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Botão Cancelar
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
@@ -322,6 +427,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Botão Principal de Salvamento
             SizedBox(
               height: 52,
               child: ElevatedButton.icon(
@@ -331,31 +438,89 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  elevation: 0,
                 ),
-                icon: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    // ignore: deprecated_member_use
-                    color: AppColors.brancoPuro.withOpacity(0.18),
-                  ),
-                  child: const Icon(Icons.check_rounded, size: 16),
-                ),
+                icon: const Icon(Icons.check_rounded, size: 16),
                 label: const Text(
                   'Salvar ordem de serviço',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Ordem de serviço cadastrada com sucesso!',
-                        ),
-                      ),
+                    // Sanitização de strings para double com segurança
+                    final cleanPriceText = _basePriceController.text
+                        .replaceAll('R\$ ', '')
+                        .trim();
+                    final basePrice = double.tryParse(cleanPriceText) ?? 0.0;
+
+                    final kmDist = _isExternal
+                        ? (double.tryParse(_kmDistanceController.text.trim()) ??
+                              0.0)
+                        : 0.0;
+
+                    final novaOS = OrdemServico(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      clientId: _clienteSelecionadoId!,
+                      employeeId: _funcionarioSelecionadoId!,
+                      technicianId: _funcionarioSelecionadoId,
+                      status: _statusSelecionado,
+                      tipoAtendimento: _tipoSelecionado,
+                      isExternal: _isExternal,
+                      kmDistance: kmDist,
+                      serviceBasePrice: basePrice,
+                      kmFee: 0.0, // Tratado dinamicamente pela ViewModel
+                      totalValue: 0.0, // Tratado dinamicamente pela ViewModel
+                      observations: _observationsController.text.trim().isEmpty
+                          ? null
+                          : _observationsController.text.trim(),
+                      equipamento: _equipamentoController.text.trim().isEmpty
+                          ? null
+                          : _equipamentoController.text.trim(),
+                      tipoDefeito: _tipoDefeitoController.text.trim().isEmpty
+                          ? null
+                          : _tipoDefeitoController.text.trim(),
+                      modeloEquipamento:
+                          _modeloEquipamentoController.text.trim().isEmpty
+                          ? null
+                          : _modeloEquipamentoController.text.trim(),
+                      metragemAmbiente:
+                          _metragemAmbienteController.text.trim().isEmpty
+                          ? null
+                          : _metragemAmbienteController.text.trim(),
+                      tensaoEletrica:
+                          _tensaoEletricaController.text.trim().isEmpty
+                          ? null
+                          : _tensaoEletricaController.text.trim(),
+                      equipamentoAvaliado:
+                          _equipamentoAvaliadoController.text.trim().isEmpty
+                          ? null
+                          : _equipamentoAvaliadoController.text.trim(),
+                      diagnostico: _diagnosticoController.text.trim().isEmpty
+                          ? null
+                          : _diagnosticoController.text.trim(),
+                      solucaoRecomendada:
+                          _solucaoRecomendadaController.text.trim().isEmpty
+                          ? null
+                          : _solucaoRecomendadaController.text.trim(),
                     );
+
+                    // Executa a persistência e regras matemáticas de KM pela ViewModel
+                    await context.read<OrdemServicoViewModel>().salvarOrdem(
+                      novaOS,
+                    );
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Ordem de serviço cadastrada com sucesso!',
+                          ),
+                          backgroundColor: AppColors.primary,
+                        ),
+                      );
+                      Navigator.pop(
+                        context,
+                      ); // Retorna para a tela de listagem atualizada
+                    }
                   }
                 },
               ),

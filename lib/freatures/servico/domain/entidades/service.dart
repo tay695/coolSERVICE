@@ -1,8 +1,4 @@
-enum TipoAtendimento {
-  manutencao,
-  instalacao,
-  visitaTecnica,
-}
+enum TipoAtendimento { manutencao, instalacao, visitaTecnica }
 
 class Service {
   final String id;
