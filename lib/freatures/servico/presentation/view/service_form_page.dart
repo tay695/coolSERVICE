@@ -1,4 +1,3 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/servico/domain/entidades/service.dart';
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';

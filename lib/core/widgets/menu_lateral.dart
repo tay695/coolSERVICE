@@ -2,6 +2,7 @@ import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_v
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_list_page.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
+import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_form_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
