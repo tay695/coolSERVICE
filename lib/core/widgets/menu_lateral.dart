@@ -1,20 +1,19 @@
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
-import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_list_page.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
+import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class MenuLateral extends StatelessWidget {
-   final Funcionario funcionario;
-    const MenuLateral({super.key, required this.funcionario});
+  final Funcionario funcionario;
+  const MenuLateral({super.key, required this.funcionario});
 
   @override
   Widget build(BuildContext context) {
-    final isAdmin = funcionario.role == UserRole.admin;
-    // Escuta a ViewModel global para saber se o Modo Escuro está ativo
     final configViewModel = context.watch<AppConfigViewModel>();
 
     return Drawer(
@@ -26,33 +25,35 @@ class MenuLateral extends StatelessWidget {
               child: Icon(Icons.build, size: 35, color: Color.fromARGB(255, 255, 255, 255)),
             ),
             accountName: const Text(
-              'CoolService App',
+              'CoolService ',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            accountEmail: const Text('sprint2_v1.0@coolservice.com'),
+            accountEmail: const Text('coolservice@gmail.com'),
             decoration: BoxDecoration(color: Theme.of(context).primaryColor),
           ),
 
-          //  Início
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Início'),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => DashboardPage(funcionario: funcionario)),
+                MaterialPageRoute(
+                  builder: (_) => DashboardPage(funcionario: funcionario),
+                ),
               );
             },
           ),
 
-          //  Clientes
           ListTile(
             leading: const Icon(Icons.people),
             title: const Text('Clientes'),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => ClientListPage(funcionario: funcionario)),
+                MaterialPageRoute(
+                  builder: (_) => ClientListPage(funcionario: funcionario),
+                ),
               );
             },
           ),
@@ -70,10 +71,6 @@ class MenuLateral extends StatelessWidget {
             },
           ),
 
-         
-
-
-          // Item: Serviços
           ListTile(
             leading: const Icon(Icons.handyman),
             title: const Text('Serviços'),
@@ -81,7 +78,9 @@ class MenuLateral extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ServiceListPage(funcionario: funcionario)),
+                MaterialPageRoute(
+                  builder: (_) => ServiceListPage(funcionario: funcionario),
+                ),
               );
             },
           ),
@@ -92,8 +91,14 @@ class MenuLateral extends StatelessWidget {
             title: const Text('Ordens de Serviço'),
             onTap: () {
               Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const OrdemServicoFormPage()),
+              );
             },
           ),
+
+          const Divider(),
 
           SwitchListTile(
             secondary: Icon(

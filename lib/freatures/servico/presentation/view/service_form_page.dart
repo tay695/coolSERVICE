@@ -1,3 +1,4 @@
+import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/freatures/servico/domain/entidades/service.dart';
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,7 @@ class _ServiceFormPageState extends State<ServiceFormPage> {
       appBar: AppBar(
         title: Text(isEditing ? 'Editar Serviço' : 'Novo Serviço'),
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
