@@ -2,7 +2,6 @@ import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_v
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_list_page.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
-import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_form_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
@@ -21,18 +20,28 @@ class MenuLateral extends StatelessWidget {
       child: Column(
         children: [
           UserAccountsDrawerHeader(
-            currentAccountPicture: const CircleAvatar(
-              backgroundColor: Color.fromARGB(255, 12, 8, 8),
-              child: Icon(Icons.build, size: 35, color: Color.fromARGB(255, 255, 255, 255)),
+            currentAccountPicture: GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) => DashboardPage(funcionario: funcionario),
+                  ),
+                  (route) => false,
+                );
+              },
+              child: const CircleAvatar(
+                backgroundColor: Colors.transparent,
+                backgroundImage: AssetImage('assets/images/logo2.png'),
+              ),
             ),
             accountName: const Text(
-              'CoolService ',
+              'CoolService App',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            accountEmail: const Text('coolservice@gmail.com'),
+            accountEmail: const Text('coolservice@gmail.com.com'),
             decoration: BoxDecoration(color: Theme.of(context).primaryColor),
           ),
-
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Início'),
@@ -67,7 +76,8 @@ class MenuLateral extends StatelessWidget {
               Navigator.pop(context);
               Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (_) => FuncionarioListPage(funcionario: funcionario)),
+                  builder: (_) => FuncionarioListPage(funcionario: funcionario),
+                ),
               );
             },
           ),
