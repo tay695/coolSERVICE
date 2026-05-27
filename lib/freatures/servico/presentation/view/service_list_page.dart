@@ -1,11 +1,13 @@
-
+import 'package:coolservice/core/widgets/menu_lateral.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_form_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class ServiceListPage extends StatefulWidget {
-  const ServiceListPage({super.key});
+  final Funcionario funcionario;
+  const ServiceListPage({super.key, required this.funcionario});
 
   @override
   State<ServiceListPage> createState() => _ServiceListPageState();
@@ -28,6 +30,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Serviços')),
+      drawer: MenuLateral(funcionario: widget.funcionario),
       body: viewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : viewModel.services.isEmpty
@@ -46,6 +49,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const SizedBox(height: 24),
+                      if (widget.funcionario.role == UserRole.admin)
                       ElevatedButton.icon(
                         onPressed: () => Navigator.push(
                           context,
@@ -89,7 +93,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                             ),
                           ],
                         ),
-                        trailing: PopupMenuButton(
+                        trailing: widget.funcionario.role == UserRole.admin ? PopupMenuButton(
                           itemBuilder: (context) => [
                             PopupMenuItem(
                               child: const Text('Editar'),
@@ -136,18 +140,20 @@ class _ServiceListPageState extends State<ServiceListPage> {
                               },
                             ),
                           ],
-                        ),
+                        ):null
                       ),
                     );
                   },
                 ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: widget.funcionario.role == UserRole.admin
+    ? FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const ServiceFormPage()),
         ),
         child: const Icon(Icons.add),
-      ),
+      )
+    : null,
     );
   }
 }
