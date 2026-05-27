@@ -65,9 +65,9 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
             DropdownButtonFormField<UserRole>(
               value: _selectedRole,
               decoration: const InputDecoration(labelText: 'Cargo'),
-              items: UserRole.values
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r.name)))
-                  .toList(),
+              items: [UserRole.admin, UserRole.funcionario]
+              .map((r) => DropdownMenuItem(value: r, child: Text(r.name)))
+               .toList(),
               onChanged: (v) => setState(() => _selectedRole = v!),
             ),
             const SizedBox(height: 24),
