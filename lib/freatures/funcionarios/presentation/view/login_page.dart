@@ -6,8 +6,6 @@ import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
-
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -22,9 +20,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _error;
   String hashSenha(String texto) {
-  final bytes = utf8.encode(texto);
-  return sha256.convert(bytes).toString();
-}
+    final bytes = utf8.encode(texto);
+    return sha256.convert(bytes).toString();
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -49,8 +47,11 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    Navigator.pushReplacement(context,
-    MaterialPageRoute(builder: (_) => DashboardPage(funcionario: funcionario!)),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DashboardPage(funcionario: funcionario!),
+      ),
     );
   }
 
@@ -99,10 +100,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 4),
               const Text(
                 'Faça login para continuar',
-                style: TextStyle(
-                  color: AppColors.cinzaNeve,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppColors.cinzaNeve, fontSize: 14),
               ),
 
               const SizedBox(height: 40),
@@ -114,7 +112,10 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: 'Usuário',
                   labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(Icons.person_outline, color: AppColors.azulGelo),
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.azulGelo,
+                  ),
                   filled: true,
                   fillColor: AppColors.azulProfundo,
                   border: OutlineInputBorder(
@@ -123,7 +124,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cianoFrio, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.cianoFrio,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -138,13 +142,19 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: InputDecoration(
                   labelText: 'Senha',
                   labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.azulGelo),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: AppColors.azulGelo,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: AppColors.cinzaNeve,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   filled: true,
                   fillColor: AppColors.azulProfundo,
@@ -154,7 +164,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cianoFrio, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppColors.cianoFrio,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -164,7 +177,10 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 12),
                 Text(
                   _error!,
-                  style: const TextStyle(color: AppColors.inactive, fontSize: 13),
+                  style: const TextStyle(
+                    color: AppColors.inactive,
+                    fontSize: 13,
+                  ),
                 ),
               ],
 
@@ -194,7 +210,10 @@ class _LoginPageState extends State<LoginPage> {
                         )
                       : const Text(
                           'Entrar',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),

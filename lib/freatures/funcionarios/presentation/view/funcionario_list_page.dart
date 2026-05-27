@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
-import 'package:coolservice/core/widgets/menu_lateral.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
 
 class FuncionarioListPage extends StatelessWidget {
-   final Funcionario funcionario;
+  final Funcionario funcionario;
   const FuncionarioListPage({super.key, required this.funcionario});
 
   @override
@@ -17,7 +16,6 @@ class FuncionarioListPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Funcionários')),
-      drawer: MenuLateral(funcionario: funcionario),
       body: Column(
         children: [
           Padding(
@@ -59,13 +57,14 @@ class FuncionarioListPage extends StatelessWidget {
                             viewModel.toggleActive(f.id, value),
                       ),
 
-                     if (funcionario.role == UserRole.admin)
+                      if (funcionario.role == UserRole.admin)
                         IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => FuncionarioFormPage(funcionario: f),
+                              builder: (_) =>
+                                  FuncionarioFormPage(funcionario: f),
                             ),
                           ),
                         ),

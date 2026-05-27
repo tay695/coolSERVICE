@@ -1,15 +1,22 @@
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
+import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:coolservice/core/widgets/menu_lateral.dart';
-import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
-import 'package:flutter/material.dart';
-import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class DashboardPage extends StatelessWidget {
   final Funcionario funcionario;
+
   const DashboardPage({super.key, required this.funcionario});
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<OrdemServicoViewModel>();
+    final ordens = viewModel.ordens;
+
     return Scaffold(
       appBar: AppBar(title: const Text('CoolService Dashboard')),
       drawer: MenuLateral(funcionario: funcionario),
@@ -25,37 +32,9 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  _buildStatusCard(
-                    'Abertas',
-                    '5',
-                    AppColors.statusOpen,
-                    Icons.lock_open,
-                  ),
-                  _buildStatusCard(
-                    'Em Andamento',
-                    '3',
-                    AppColors.statusInProgress,
-                    Icons.loop,
-                  ),
-                  _buildStatusCard(
-                    'Concluídas',
-                    '12',
-                    AppColors.statusCompleted,
-                    Icons.check_circle,
-                  ),
-                  _buildStatusCard(
-                    'Pgto. Pendente',
-                    '2',
-                    AppColors.statusPaymentPending,
-                    Icons.error_outline,
-                  ),
-                ],
-              ),
+              child: ordens.isEmpty
+                  ? _buildEmptyState()
+                  : _buildDashboardGrid(ordens),
             ),
           ],
         ),
@@ -63,7 +42,74 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // construção dos cards
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Nenhuma Ordem de Serviço registrada.',
+            style: TextStyle(fontSize: 18, color: Colors.grey),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Cadastre uma nova OS para ver as estatísticas.',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardGrid(List<OrdemServico> ordens) {
+    final qtdAbertas = ordens
+        .where((os) => os.status == OrderStatus.open)
+        .length;
+    final qtdAndamento = ordens
+        .where((os) => os.status == OrderStatus.inProgress)
+        .length;
+    final qtdConcluidas = ordens
+        .where((os) => os.status == OrderStatus.completed)
+        .length;
+    final qtdPendentes = ordens
+        .where((os) => os.status == OrderStatus.paymentPending)
+        .length;
+
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      children: [
+        _buildStatusCard(
+          'Abertas',
+          qtdAbertas.toString(),
+          AppColors.statusOpen,
+          Icons.lock_open,
+        ),
+        _buildStatusCard(
+          'Em Andamento',
+          qtdAndamento.toString(),
+          AppColors.statusInProgress,
+          Icons.loop,
+        ),
+        _buildStatusCard(
+          'Concluídas',
+          qtdConcluidas.toString(),
+          AppColors.statusCompleted,
+          Icons.check_circle,
+        ),
+        _buildStatusCard(
+          'Pgto. Pendente',
+          qtdPendentes.toString(),
+          AppColors.statusPaymentPending,
+          Icons.error_outline,
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatusCard(
     String title,
     String count,
