@@ -1,9 +1,7 @@
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
-import 'package:coolservice/freatures/clientes/presentation/view/client_form_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_list_page.dart';
-import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_form_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +23,7 @@ class MenuLateral extends StatelessWidget {
           UserAccountsDrawerHeader(
             currentAccountPicture: const CircleAvatar(
               backgroundColor: Color.fromARGB(255, 12, 8, 8),
-              child: Icon(Icons.build, size: 35, color: Colors.blue),
+              child: Icon(Icons.build, size: 35, color: Color.fromARGB(255, 255, 255, 255)),
             ),
             accountName: const Text(
               'CoolService App',
@@ -58,42 +56,19 @@ class MenuLateral extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.people),
-            title: const Text('Adicionar clientes'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ClientFormPage()),
-              );
-            },
-          ),
 
           // Item: Funcionários
-           ListTile(
+          ListTile(
             leading: const Icon(Icons.badge),
             title: const Text('Funcionários'),
             onTap: () {
               Navigator.pop(context);
               Navigator.of(context).push(
                 MaterialPageRoute(
-                    builder: (_) =>
-                        FuncionarioListPage(funcionario: funcionario)),
+                    builder: (_) => FuncionarioListPage(funcionario: funcionario)),
               );
             },
           ),
-          if (isAdmin)
-            ListTile(
-              leading: const Icon(Icons.person_add_alt_1),
-              title: const Text('Adicionar funcionário'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const FuncionarioFormPage()),
-                );
-              },
-            ),
 
          
 
@@ -110,15 +85,6 @@ class MenuLateral extends StatelessWidget {
               );
             },
           ),
-           if (isAdmin)
-            ListTile(
-              leading: const Icon(Icons.add_box),
-              title: const Text('Adicionar serviço'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-
 
           // Item: Ordens de Serviço
           ListTile(
