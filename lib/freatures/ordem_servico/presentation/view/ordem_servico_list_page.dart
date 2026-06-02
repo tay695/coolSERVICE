@@ -1,12 +1,17 @@
 import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entidades/ordem_servico.dart';
 import 'ordem_servico_form_page.dart';
+// 🔥 IMPORT ADICIONADO: Garante o acesso à entidade Funcionario
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class OrdemServicoListPage extends StatefulWidget {
-  const OrdemServicoListPage({super.key});
+  final Funcionario funcionario;
+
+  const OrdemServicoListPage({super.key, required this.funcionario});
 
   @override
   State<OrdemServicoListPage> createState() => _OrdemServicoListPageState();
@@ -29,6 +34,10 @@ class _OrdemServicoListPageState extends State<OrdemServicoListPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ordens de Serviço'), centerTitle: true),
+      bottomNavigationBar: MenuInferior(
+        currentIndex: 2,
+        funcionario: widget.funcionario,
+      ),
       body: listOS.isEmpty
           ? Center(
               child: Column(

@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// --- TELA DE CONFIGURAÇÕES INTERNA ---
-/// Reúne os itens secundários, o Modo Escuro e o Botão Sair conforme você pediu!
 class ConfiguracoesPage extends StatelessWidget {
   final Funcionario funcionario;
   const ConfiguracoesPage({super.key, required this.funcionario});
@@ -27,8 +26,7 @@ class ConfiguracoesPage extends StatelessWidget {
         title: const Text('Configurações'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.brancoPuro,
-        automaticallyImplyLeading:
-            false, // Remove a seta de voltar para manter o foco no menu inferior
+        automaticallyImplyLeading: false,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -59,7 +57,6 @@ class ConfiguracoesPage extends StatelessWidget {
           ),
           const Divider(height: 32),
 
-          // O seu SwitchListTile original de Tema Escuro
           SwitchListTile(
             secondary: Icon(
               configViewModel.isDarkMode ? Icons.dark_mode : Icons.light_mode,
@@ -88,7 +85,6 @@ class ConfiguracoesPage extends StatelessWidget {
           ),
         ],
       ),
-      // Mantém a barra inferior visível aqui também
       bottomNavigationBar: MenuInferior(
         funcionario: funcionario,
         currentIndex: 3,
@@ -100,7 +96,7 @@ class ConfiguracoesPage extends StatelessWidget {
 /// --- BARRA DE NAVEGAÇÃO DO RODAPÉ ---
 class MenuInferior extends StatelessWidget {
   final Funcionario funcionario;
-  final int currentIndex; // Indica qual ícone deve ficar aceso/selecionado
+  final int currentIndex;
 
   const MenuInferior({
     super.key,
@@ -109,8 +105,7 @@ class MenuInferior extends StatelessWidget {
   });
 
   void _executarNavegacao(BuildContext context, int index) {
-    if (index == currentIndex) return; // Evita recarregar a própria tela ativa
-
+    if (index == currentIndex) return;
     Widget destino;
     switch (index) {
       case 0:
@@ -120,7 +115,7 @@ class MenuInferior extends StatelessWidget {
         destino = ClientListPage(funcionario: funcionario);
         break;
       case 2:
-        destino = const OrdemServicoListPage();
+        destino = OrdemServicoListPage(funcionario: funcionario);
         break;
       case 3:
         destino = ConfiguracoesPage(funcionario: funcionario);
