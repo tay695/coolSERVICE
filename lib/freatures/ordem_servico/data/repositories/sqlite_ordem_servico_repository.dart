@@ -32,6 +32,7 @@ class SQLiteOrdemServicoRepository implements IOrdemServicoRepository {
       equipamentoAvaliado: ordem.equipamentoAvaliado,
       diagnostico: ordem.diagnostico,
       solucaoRecomendada: ordem.solucaoRecomendada,
+      isPaid: ordem.isPaid,
     );
 
     await db.insert(
@@ -41,6 +42,7 @@ class SQLiteOrdemServicoRepository implements IOrdemServicoRepository {
     );
   }
 
+  @override
   Future<List<OrdemServico>> listAll() async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> maps = await db.query('service_orders');

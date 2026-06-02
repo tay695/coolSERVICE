@@ -4,6 +4,7 @@ import 'package:coolservice/freatures/clientes/presentation/view/client_list_pag
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario_list_page.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_list_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/login_page.dart';
 import 'package:flutter/material.dart';
@@ -105,7 +106,7 @@ class MenuLateral extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const OrdemServicoFormPage()),
+                MaterialPageRoute(builder: (_) => const OrdemServicoListPage()),
               );
             },
           ),
