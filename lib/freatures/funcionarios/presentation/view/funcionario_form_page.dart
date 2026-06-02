@@ -21,6 +21,7 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
   final _especialidadeController = TextEditingController();
   final _phoneController = TextEditingController();
   UserRole _selectedRole = UserRole.funcionario;
+  bool _salvando = false;
 
   @override
   void initState() {
@@ -221,63 +222,96 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
               isEditing ? 'Salvar funcionário' : 'Cadastrar funcionário',
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             ),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                final username = viewModel.generateUsername(_nomeController.text, _phoneController.text);
-                final password = viewModel.generatePassword(_cpfController.text);
-                final passwordHash = sha256.convert(utf8.encode(password)).toString();
+            onPressed: _salvando
+                    ? null
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() => _salvando = true);
 
-                final funcionario = Funcionario(
-                  id: widget.funcionario?.id ?? DateTime.now().toString(),
-                  name: _nomeController.text,
-                  cpf: _cpfController.text,
-                  especialty: _especialidadeController.text,
-                  phone: _phoneController.text,
-                  role: _selectedRole,
-                  isActive: widget.funcionario?.isActive ?? true,
-                  username: widget.funcionario?.username ?? username,
-                  passwordHash: widget.funcionario?.passwordHash ?? passwordHash,
-                );
+                          final username = viewModel.generateUsername(
+                              _nomeController.text, _phoneController.text);
+                          final password = viewModel.generatePassword(_cpfController.text);
+                          final passwordHash =
+                              sha256.convert(utf8.encode(password)).toString();
 
-                if (isEditing) {
-                  await viewModel.updateFuncionario(funcionario);
-                } else {
-                  await viewModel.createFuncionario(funcionario);
-                }
+                          final funcionario = Funcionario(
+                            id: widget.funcionario?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                            name: _nomeController.text,
+                            cpf: _cpfController.text,
+                            especialty: _especialidadeController.text,
+                            phone: _phoneController.text,
+                            role: _selectedRole,
+                            isActive: widget.funcionario?.isActive ?? true,
+                            username: widget.funcionario?.username ?? username,
+                            passwordHash: widget.funcionario?.passwordHash ?? passwordHash,
+                            firebaseUid: widget.funcionario?.firebaseUid,
+                          );
 
-                if (!isEditing) {
-                  await showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Credenciais do Funcionário'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Usuário: $username'),
-                          const SizedBox(height: 8),
-                          Text('Senha: $password'),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                Navigator.pop(context);
-              }
-            },
-          ),
+                          try {
+                            if (isEditing) {
+                              await viewModel.updateFuncionario(funcionario);
+                            } else {
+                              await viewModel.createFuncionario(funcionario);
+                            }
+
+                            if (!isEditing && context.mounted) {
+                              await showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Credenciais do Funcionário'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Repasse as credenciais abaixo ao funcionário:',
+                                        style: TextStyle(fontSize: 13, color: Colors.grey),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      _credencialRow(Icons.person, 'Usuário', username),
+                                      const SizedBox(height: 8),
+                                      _credencialRow(Icons.lock, 'Senha', password),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            setState(() => _salvando = false);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Erro ao cadastrar: $e')),
+                              );
+                            }
+                          }
+                        }
+                      },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
-        const SizedBox(height: 16),
+      ),
+    );
+  }
+
+  Widget _credencialRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.azulCeu),
+        const SizedBox(width: 8),
+        Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+        SelectableText(value),
       ],
-    ),
-  ),
-);
+    );
   }
 }

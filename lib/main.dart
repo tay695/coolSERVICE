@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:crypto/crypto.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:coolservice/firebase_options.dart';
+
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
@@ -48,6 +51,10 @@ void main() async {
   // Instanciação dos Repositórios
   final funcionarioRepository = SQLiteFuncionarioRepository();
   final clienteRepository = SQLiteClientRepository();
+  
+  await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
   
   runApp(
     MultiProvider(

@@ -10,6 +10,7 @@ class Funcionario {
   final bool isActive;
   final String username;   
   final String passwordHash;
+  final String? firebaseUid;
 
   Funcionario({
     required this.id,
@@ -20,6 +21,7 @@ class Funcionario {
     required this.role,
     required this.isActive,
     required this.username, 
-    required this.passwordHash
+    required this.passwordHash,
+    this.firebaseUid,
   });
 }
