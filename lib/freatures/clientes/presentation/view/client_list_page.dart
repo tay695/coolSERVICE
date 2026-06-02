@@ -1,4 +1,4 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
+import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_form_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
@@ -39,7 +39,10 @@ class _ClientListPageState extends State<ClientListPage> {
         foregroundColor: AppColors.brancoPuro,
         elevation: 0,
       ),
-      drawer: MenuLateral(funcionario: funcionario),
+      bottomNavigationBar: MenuInferior(
+        funcionario: funcionario,
+        currentIndex: 1,
+      ),
       body: Column(
         children: [
           Container(
