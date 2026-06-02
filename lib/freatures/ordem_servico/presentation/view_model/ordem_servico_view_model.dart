@@ -1,6 +1,7 @@
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/repositories/i_odem_servico_repository.dart';
+import 'package:coolservice/freatures/ordem_servico/domain/usecases/calc_km_fee_usecase.dart';
 import 'package:flutter/material.dart';
 
 class OrdemServicoViewModel extends ChangeNotifier {
@@ -83,6 +84,7 @@ class OrdemServicoViewModel extends ChangeNotifier {
     }
   }
 
+
   List<OrdemServico> buscarOrdensDoCliente(String clientId) {
     return _ordens.where((os) => os.clientId == clientId).toList();
   }
@@ -97,4 +99,15 @@ class OrdemServicoViewModel extends ChangeNotifier {
     );
     return ordensPendentes.fold(0.0, (total, os) => total + os.totalValue);
   }
+
+
+  Future<({double distanciaKm, double taxa})> calcularKmParaCliente(
+    String enderecoCliente,
+    String city,
+    String state,
+  ) async {
+    final useCase = CalcKmFeeUseCase(taxaPorKm: _taxaKm);
+    return await useCase.executar(enderecoCliente, city, state);
+  }
+
 }

@@ -1,4 +1,4 @@
-enum TipoAtendimento { manutencao, instalacao, visitaTecnica }
+import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
 
 class Service {
   final String id;
