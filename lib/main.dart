@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:crypto/crypto.dart';
 
-
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
-
 import 'package:coolservice/freatures/clientes/data/repositories/sqlite_client_repository.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:coolservice/freatures/funcionarios/data/repositories/sqlite_funcionario_repository.dart';
@@ -58,9 +56,11 @@ void main() async {
         ChangeNotifierProvider(
           create: (_) => FuncionarioViewModel(funcionarioRepository),
         ),
+
         ChangeNotifierProvider(
           create: (_) => ClientViewModel(clienteRepository),
         ),
+
         ChangeNotifierProvider(
           create: (_) => ServiceViewModel(
             kIsWeb
@@ -68,6 +68,7 @@ void main() async {
                 : SQLiteServiceRepository(),
           ),
         ),
+
         ChangeNotifierProvider(
           create: (_) => OrdemServicoViewModel(
             repository: SQLiteOrdemServicoRepository(),
@@ -75,6 +76,7 @@ void main() async {
           ),
         ),
       ],
+
       child: const MyApp(),
     ),
   );

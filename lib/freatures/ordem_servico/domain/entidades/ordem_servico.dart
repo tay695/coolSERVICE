@@ -1,20 +1,23 @@
 enum OrderStatus { open, inProgress, completed, paymentPending, cancelled }
+
 enum TipoAtendimento { manutencao, instalacao, visitaTecnica }
+
 class OrdemServico {
   final String id;
   final String clientId;
   final String employeeId;
   final String? technicianId;
   final OrderStatus status;
-   final TipoAtendimento tipoAtendimento;
+  final TipoAtendimento tipoAtendimento;
   final bool isExternal;
   final double kmDistance;
   final double serviceBasePrice;
   final double kmFee;
   final double totalValue;
   final String? observations;
+  final bool isPaid;
 
-   //campos de Manutenção
+  //campos de Manutenção
   final String? equipamento;
   final String? tipoDefeito;
   //campos de Instalação
@@ -25,13 +28,14 @@ class OrdemServico {
   final String? equipamentoAvaliado;
   final String? diagnostico;
   final String? solucaoRecomendada;
- 
+
   OrdemServico({
+    required this.status,
+    this.isPaid = false,
     required this.id,
     required this.clientId,
     required this.employeeId,
     this.technicianId,
-    required this.status,
     required this.tipoAtendimento,
     required this.isExternal,
     this.kmDistance = 0.0,
@@ -47,7 +51,6 @@ class OrdemServico {
     this.equipamentoAvaliado,
     this.diagnostico,
     this.solucaoRecomendada,
-   
   });
 
   double calculateTotal() {

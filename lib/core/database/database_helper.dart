@@ -73,6 +73,7 @@ class DatabaseHelper {
       tensaoEletrica TEXT,
       equipamentoAvaliado TEXT,
       diagnostico TEXT,
+      isPaid BOOLEAN ,
       solucaoRecomendada TEXT,
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL

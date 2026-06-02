@@ -71,11 +71,30 @@ class OrdemServicoViewModel extends ChangeNotifier {
 
       await repository.save(osCompletaComValores);
 
+      _ordens.removeWhere((os) => os.id == osCompletaComValores.id);
       _ordens.add(osCompletaComValores);
+
+      _ordens.sort((a, b) => b.id.compareTo(a.id));
+
       notifyListeners();
     } catch (e) {
       print("Erro interno ao calcular/salvar OS: $e");
       rethrow;
     }
+  }
+
+  List<OrdemServico> buscarOrdensDoCliente(String clientId) {
+    return _ordens.where((os) => os.clientId == clientId).toList();
+  }
+
+  bool clientePossuiPendencia(String clientId) {
+    return _ordens.any((os) => os.clientId == clientId && os.isPaid == false);
+  }
+
+  double calcularDividaTotalDoCliente(String clientId) {
+    final ordensPendentes = _ordens.where(
+      (os) => os.clientId == clientId && os.isPaid == false,
+    );
+    return ordensPendentes.fold(0.0, (total, os) => total + os.totalValue);
   }
 }

@@ -3,7 +3,6 @@ import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servi
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:coolservice/core/widgets/menu_lateral.dart';
 
