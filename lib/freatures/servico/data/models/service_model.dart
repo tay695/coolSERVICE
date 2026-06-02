@@ -1,4 +1,5 @@
 import 'package:coolservice/freatures/servico/domain/entidades/service.dart';
+import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
 
 class ServiceModel extends Service {
   ServiceModel({

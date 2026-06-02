@@ -3,6 +3,8 @@ class Client {
   final String name;
   final String cpfCnpj;
   final String address;
+  final String city;
+  final String state;
   final String phone;
   final String email;
 
@@ -11,6 +13,8 @@ class Client {
     required this.name,
     required this.cpfCnpj,
     required this.address,
+    required this.city,
+    required this.state,
     required this.phone,
     required this.email,
   });

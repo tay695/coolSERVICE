@@ -17,6 +17,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
   final _nomeController = TextEditingController();
   final _cpfCnpjController = TextEditingController();
   final _enderecoController = TextEditingController();
+  final _cidadeController = TextEditingController();
+  final _estadoController = TextEditingController();
   final _telefoneController = TextEditingController();
   final _emailController = TextEditingController();
 
@@ -27,6 +29,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
       _nomeController.text = widget.client!.name;
       _cpfCnpjController.text = widget.client!.cpfCnpj;
       _enderecoController.text = widget.client!.address;
+      _cidadeController.text = widget.client!.city;
+      _estadoController.text = widget.client!.state;
       _telefoneController.text = widget.client!.phone;
       _emailController.text = widget.client!.email;
     }
@@ -37,6 +41,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
     _nomeController.dispose();
     _cpfCnpjController.dispose();
     _enderecoController.dispose();
+    _cidadeController.dispose();
+    _estadoController.dispose();
     _telefoneController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -194,6 +200,16 @@ class _ClientFormPageState extends State<ClientFormPage> {
                   controller: _enderecoController,
                   decoration: _fieldDecoration('Endereço', icon: Icons.location_on_outlined),
                 ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _cidadeController,
+                  decoration: _fieldDecoration('Cidade', icon: Icons.location_city_outlined),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _estadoController,
+                  decoration: _fieldDecoration('Estado', icon: Icons.location_on_outlined),
+                ),
               ],
             ),
 
@@ -235,6 +251,8 @@ class _ClientFormPageState extends State<ClientFormPage> {
                       address: _enderecoController.text,
                       phone: _telefoneController.text,
                       email: _emailController.text,
+                      city: _cidadeController.text,
+                      state: _estadoController.text,
                     );
                     if (isEditing) {
                       await viewModel.updateClient(client);
