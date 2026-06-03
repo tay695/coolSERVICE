@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:coolservice/firebase_options.dart';
+import 'package:coolservice/core/services/notification_service.dart';
 
 import 'package:coolservice/core/app_config/data/preferences_services.dart';
 import 'package:coolservice/core/app_config/presentation/viewmodels/app_config_view_model.dart';
@@ -51,10 +52,11 @@ void main() async {
   // Instanciação dos Repositórios
   final funcionarioRepository = SQLiteFuncionarioRepository();
   final clienteRepository = SQLiteClientRepository();
-  
+
   await Firebase.initializeApp(
   options: DefaultFirebaseOptions.currentPlatform,
 );
+await NotificationService.initialize();
   
   runApp(
     MultiProvider(

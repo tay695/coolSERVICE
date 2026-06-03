@@ -156,7 +156,7 @@ class MenuInferior extends StatelessWidget {
         NavigationDestination(
           icon: Icon(Icons.settings_outlined),
           selectedIcon: Icon(Icons.settings, color: AppColors.cianoFrio),
-          label: 'serviços e funcionários',
+          label: 'Gestão',
         ),
       ],
     );

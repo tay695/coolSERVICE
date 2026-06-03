@@ -6,6 +6,9 @@ import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:coolservice/core/services/notification_service.dart';
+import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -61,6 +64,16 @@ class _LoginPageState extends State<LoginPage> {
         setState(() => _error = 'Usuário inativo. Contate o administrador.');
         return;
       }
+      if (funcionario.firebaseUid != null) {
+         final token = await NotificationService.getToken();
+         if (token != null) {
+           await context.read<FuncionarioViewModel>().saveFcmToken(
+             funcionario.firebaseUid!,
+             token,
+           );
+         }
+       }
+     
 
       Navigator.pushReplacement(
         context,

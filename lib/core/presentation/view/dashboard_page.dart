@@ -5,6 +5,10 @@ import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servi
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:coolservice/core/services/notification_service.dart';
+import 'dart:async';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class DashboardPage extends StatefulWidget {
   final Funcionario funcionario;
@@ -18,6 +22,38 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   OrderStatus? _filtroAtivo;
   final ScrollController _tabsScrollController = ScrollController();
+  StreamSubscription? _osListener;
+
+  @override
+void initState() {
+  super.initState();
+  _iniciarListenerOS();
+}
+
+void _iniciarListenerOS() {
+  final funcionarioId = widget.funcionario.id;
+  
+  _osListener = FirebaseFirestore.instance
+      .collection('ordens_servico')
+      .where('employeeId', isEqualTo: funcionarioId)
+      .snapshots()
+      .listen((snapshot) {
+    for (final change in snapshot.docChanges) {
+      if (change.type == DocumentChangeType.added) {
+        NotificationService.showLocalNotification(
+          // cria mensagem fake para exibir
+          RemoteMessage(
+            notification: RemoteNotification(
+              title: 'Nova Ordem de Serviço',
+              body: 'Você foi alocado em uma nova OS.',
+            ),
+          ),
+        );
+      }
+    }
+  });
+}
+
 
   static const _statusConfig = {
     OrderStatus.open: _StatusConfig(
@@ -50,11 +86,12 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   };
 
-  @override
-  void dispose() {
-    _tabsScrollController.dispose();
-    super.dispose();
-  }
+@override
+void dispose() {
+  _osListener?.cancel();
+  _tabsScrollController.dispose();
+  super.dispose();
+}
 
   void _animarRolagemAba(int index) {
     if (_tabsScrollController.hasClients) {

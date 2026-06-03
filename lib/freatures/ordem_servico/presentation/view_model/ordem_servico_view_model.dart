@@ -3,6 +3,8 @@ import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servi
 import 'package:coolservice/freatures/ordem_servico/domain/repositories/i_odem_servico_repository.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/usecases/calc_km_fee_usecase.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:coolservice/core/services/notification_service.dart';
 
 class OrdemServicoViewModel extends ChangeNotifier {
   final IOrdemServicoRepository repository;
@@ -71,6 +73,49 @@ class OrdemServicoViewModel extends ChangeNotifier {
       );
 
       await repository.save(osCompletaComValores);
+      // Salva no Firestore
+try {
+  await FirebaseFirestore.instance
+      .collection('ordens_servico')
+      .doc(osCompletaComValores.id)
+      .set({
+    'id': osCompletaComValores.id,
+    'clientId': osCompletaComValores.clientId,
+    'employeeId': osCompletaComValores.employeeId,
+    'technicianId': osCompletaComValores.technicianId,
+    'status': osCompletaComValores.status.name,
+    'tipoAtendimento': osCompletaComValores.tipoAtendimento.name,
+    'isExternal': osCompletaComValores.isExternal,
+    'kmDistance': osCompletaComValores.kmDistance,
+    'serviceBasePrice': osCompletaComValores.serviceBasePrice,
+    'kmFee': osCompletaComValores.kmFee,
+    'totalValue': osCompletaComValores.totalValue,
+    'observations': osCompletaComValores.observations,
+    'criadoEm': FieldValue.serverTimestamp(),
+  });
+} catch (e) {
+  print('Erro ao salvar OS no Firestore: $e');
+}
+      try {
+        final funcionarioDoc = await FirebaseFirestore.instance
+        .collection('funcionarios')
+        .where('id', isEqualTo: osCompletaComValores.employeeId)
+        .limit(1)
+        .get();
+        
+        if (funcionarioDoc.docs.isNotEmpty) {
+          final fcmToken = funcionarioDoc.docs.first.data()['fcmToken'];
+          if (fcmToken != null) {
+            await NotificationService.sendNotification(
+              token: fcmToken,
+              title: 'Nova Ordem de Serviço',
+              body: 'Você foi alocado em uma nova OS.',
+              );
+              }
+              }
+              } catch (e) {
+                 print('Erro ao enviar notificação: $e');
+                 }
 
       _ordens.removeWhere((os) => os.id == osCompletaComValores.id);
       _ordens.add(osCompletaComValores);
