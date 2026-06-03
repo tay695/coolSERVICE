@@ -1,4 +1,4 @@
-enum OrderStatus { open, inProgress, completed, paymentPending, cancelled }
+enum OrderStatus { aberto, encaminhada, completo, pedentes, cancelados }
 
 enum TipoAtendimento { manutencao, instalacao, visitaTecnica }
 

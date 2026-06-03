@@ -23,7 +23,7 @@ class ConfiguracoesPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: isDark ? AppColors.noiteArtica : AppColors.brancoGelo,
       appBar: AppBar(
-        title: const Text('Configurações'),
+        title: const Text('controles de serviços e funcionários'),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.brancoPuro,
         automaticallyImplyLeading: false,
@@ -33,7 +33,7 @@ class ConfiguracoesPage extends StatelessWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.badge, color: AppColors.primary),
-            title: const Text('Gerenciar Funcionários'),
+            title: const Text('Funcionários da empresa'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.of(context).push(
@@ -45,7 +45,7 @@ class ConfiguracoesPage extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.handyman, color: AppColors.primary),
-            title: const Text('Tabela de Serviços'),
+            title: const Text('Serviços prestados'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.of(context).push(
@@ -156,7 +156,7 @@ class MenuInferior extends StatelessWidget {
         NavigationDestination(
           icon: Icon(Icons.settings_outlined),
           selectedIcon: Icon(Icons.settings, color: AppColors.cianoFrio),
-          label: 'serviços e funcionários',
+          label: 'Serv/Funci',
         ),
       ],
     );

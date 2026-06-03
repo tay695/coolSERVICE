@@ -20,28 +20,28 @@ class _DashboardPageState extends State<DashboardPage> {
   final ScrollController _tabsScrollController = ScrollController();
 
   static const _statusConfig = {
-    OrderStatus.open: _StatusConfig(
+    OrderStatus.aberto: _StatusConfig(
       label: 'Em aberto',
       color: Color(0xFF378ADD),
       bgColor: Color(0xFFE6F1FB),
       textColor: Color(0xFF0C447C),
       icon: Icons.lock_open_outlined,
     ),
-    OrderStatus.inProgress: _StatusConfig(
+    OrderStatus.encaminhada: _StatusConfig(
       label: 'Em andamento',
       color: Color(0xFF1D9E75),
       bgColor: Color(0xFFE1F5EE),
       textColor: Color(0xFF085041),
       icon: Icons.loop_outlined,
     ),
-    OrderStatus.paymentPending: _StatusConfig(
+    OrderStatus.pedentes: _StatusConfig(
       label: 'Pgto. pendente',
       color: Color(0xFFBA7517),
       bgColor: Color(0xFFFAEEDA),
       textColor: Color(0xFF633806),
       icon: Icons.schedule_outlined,
     ),
-    OrderStatus.completed: _StatusConfig(
+    OrderStatus.completo: _StatusConfig(
       label: 'Concluídas',
       color: Color(0xFF639922),
       bgColor: Color(0xFFEAF3DE),
@@ -146,10 +146,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 _filtroAtivo = isAtivo ? null : entry.key;
               });
               final mapaIndexes = {
-                OrderStatus.open: 1,
-                OrderStatus.inProgress: 2,
-                OrderStatus.paymentPending: 3,
-                OrderStatus.completed: 4,
+                OrderStatus.aberto: 1,
+                OrderStatus.encaminhada: 2,
+                OrderStatus.pedentes: 3,
+                OrderStatus.completo: 4,
               };
               _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
             },
@@ -217,10 +217,10 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildFiltroTabs() {
     final tabs = [
       (null, 'Todas'),
-      (OrderStatus.open, 'Em aberto'),
-      (OrderStatus.inProgress, 'Em andamento'),
-      (OrderStatus.paymentPending, 'Pendente'),
-      (OrderStatus.completed, 'Concluídas'),
+      (OrderStatus.aberto, 'Em aberto'),
+      (OrderStatus.encaminhada, 'Em andamento'),
+      (OrderStatus.pedentes, 'Pendente'),
+      (OrderStatus.completo, 'Concluídas'),
     ];
 
     return SizedBox(
