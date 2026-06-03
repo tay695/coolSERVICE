@@ -1,4 +1,4 @@
-enum UserRole { admin, tecnico, funcionario, technician }
+enum UserRole { admin,  funcionario}
 
 class Funcionario {
   final String id;
@@ -11,7 +11,6 @@ class Funcionario {
   final String username;   
   final String passwordHash;
   final String? firebaseUid;
-
   Funcionario({
     required this.id,
     required this.name,
