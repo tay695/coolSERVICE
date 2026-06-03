@@ -6,11 +6,11 @@ import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario
 import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_list_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/login_page.dart';
-import 'package:coolservice/core/theme/app_theme.dart'; // Garantindo o uso do seu tema de cores
+import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-/// --- TELA DE CONFIGURAÇÕES INTERNA ---
+/// tELA DE CONFIGURAÇÕES
 class ConfiguracoesPage extends StatelessWidget {
   final Funcionario funcionario;
   const ConfiguracoesPage({super.key, required this.funcionario});
@@ -69,7 +69,6 @@ class ConfiguracoesPage extends StatelessWidget {
             },
           ),
 
-          // O seu ListTile original de Sair
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text(
@@ -124,7 +123,6 @@ class MenuInferior extends StatelessWidget {
         destino = DashboardPage(funcionario: funcionario);
     }
 
-    // Mantém exatamente a mesma mecânica de troca de rotas limpa que você já usava
     Navigator.of(
       context,
     ).pushReplacement(MaterialPageRoute(builder: (_) => destino));
@@ -158,7 +156,7 @@ class MenuInferior extends StatelessWidget {
         NavigationDestination(
           icon: Icon(Icons.settings_outlined),
           selectedIcon: Icon(Icons.settings, color: AppColors.cianoFrio),
-          label: 'Config',
+          label: 'serviços e funcionários',
         ),
       ],
     );

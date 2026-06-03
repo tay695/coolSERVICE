@@ -1,5 +1,6 @@
 import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
+import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   OrderStatus? _filtroAtivo;
+  final ScrollController _tabsScrollController = ScrollController();
 
   static const _statusConfig = {
     OrderStatus.open: _StatusConfig(
@@ -47,6 +49,29 @@ class _DashboardPageState extends State<DashboardPage> {
       icon: Icons.check_circle_outline,
     ),
   };
+
+  @override
+  void dispose() {
+    _tabsScrollController.dispose();
+    super.dispose();
+  }
+
+  void _animarRolagemAba(int index) {
+    if (_tabsScrollController.hasClients) {
+      double posicaoDestino = index * 95.0;
+      final maxScroll = _tabsScrollController.position.maxScrollExtent;
+
+      if (posicaoDestino > maxScroll) {
+        posicaoDestino = maxScroll;
+      }
+
+      _tabsScrollController.animateTo(
+        posicaoDestino,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,16 +134,25 @@ class _DashboardPageState extends State<DashboardPage> {
         physics: const NeverScrollableScrollPhysics(),
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 2.8,
+        childAspectRatio: 2.3,
         children: _statusConfig.entries.map((entry) {
           final count = ordens.where((os) => os.status == entry.key).length;
           final isAtivo = _filtroAtivo == entry.key;
           final cfg = entry.value;
 
           return GestureDetector(
-            onTap: () => setState(() {
-              _filtroAtivo = isAtivo ? null : entry.key;
-            }),
+            onTap: () {
+              setState(() {
+                _filtroAtivo = isAtivo ? null : entry.key;
+              });
+              final mapaIndexes = {
+                OrderStatus.open: 1,
+                OrderStatus.inProgress: 2,
+                OrderStatus.paymentPending: 3,
+                OrderStatus.completed: 4,
+              };
+              _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
@@ -155,12 +189,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(
-                          '$count',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: cfg.textColor,
+                        const SizedBox(height: 2),
+                        // impede o número de quebrar ou vazar se for muito grande
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '$count',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: cfg.textColor,
+                            ),
                           ),
                         ),
                       ],
@@ -187,6 +226,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return SizedBox(
       height: 40,
       child: ListView.separated(
+        controller: _tabsScrollController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: tabs.length,
@@ -196,10 +236,14 @@ class _DashboardPageState extends State<DashboardPage> {
           final isAtivo = _filtroAtivo == status;
 
           return GestureDetector(
-            onTap: () => setState(() => _filtroAtivo = status),
+            onTap: () {
+              setState(() => _filtroAtivo = status);
+              _animarRolagemAba(i);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: isAtivo
                     ? Theme.of(context).colorScheme.primary
@@ -258,7 +302,22 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildOSItem(OrdemServico os) {
     final cfg = _statusConfig[os.status]!;
-    final iniciais = _getIniciais(os.clientId);
+
+    String nomeTecnico = 'Sem Técnico';
+
+    if (os.employeeId != null && os.employeeId!.isNotEmpty) {
+      try {
+        final funcionarioViewModel = context.read<FuncionarioViewModel>();
+        final tec = funcionarioViewModel.funcionarios.firstWhere(
+          (f) => f.id == os.employeeId,
+        );
+        nomeTecnico = tec.name;
+      } catch (_) {
+        nomeTecnico = 'Técnico Não Encontrado';
+      }
+    }
+
+    final iniciaisTecnico = _getIniciais(nomeTecnico);
 
     return Container(
       decoration: BoxDecoration(
@@ -273,16 +332,19 @@ class _DashboardPageState extends State<DashboardPage> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: cfg.bgColor,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              ),
             ),
             alignment: Alignment.center,
             child: Text(
-              iniciais,
+              iniciaisTecnico,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: cfg.textColor,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -292,7 +354,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'OS-${os.id}', // 🔥 Otimizado para remover dead code desnecessário
+                  'OS-${os.id}',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -300,8 +362,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  os.clientId,
+                  'Cliente: ${os.clientId}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Téc: $nomeTecnico',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
