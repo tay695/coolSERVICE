@@ -38,7 +38,7 @@ class OrdemServicoViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> salvarOrdem(OrdemServico novaOS) async {
+  Future<void> salvarOrdem(OrdemServico novaOS, {required bool isPaid}) async {
     try {
       final taxaPorKmDoSharedPreferences = await preferencesService.getKmFee();
 
@@ -70,6 +70,7 @@ class OrdemServicoViewModel extends ChangeNotifier {
         equipamentoAvaliado: novaOS.equipamentoAvaliado,
         diagnostico: novaOS.diagnostico,
         solucaoRecomendada: novaOS.solucaoRecomendada,
+        isPaid: novaOS.isPaid,
       );
 
       await repository.save(osCompletaComValores);
@@ -129,6 +130,48 @@ try {
     }
   }
 
+  Future<void> alternarStatusPagamento(
+    OrdemServico osOriginal,
+    bool novoStatusPagamento,
+  ) async {
+    try {
+      final osAtualizada = OrdemServico(
+        id: osOriginal.id,
+        clientId: osOriginal.clientId,
+        employeeId: osOriginal.employeeId,
+        technicianId: osOriginal.technicianId,
+        status: osOriginal.status,
+        tipoAtendimento: osOriginal.tipoAtendimento,
+        isExternal: osOriginal.isExternal,
+        kmDistance: osOriginal.kmDistance,
+        serviceBasePrice: osOriginal.serviceBasePrice,
+        kmFee: osOriginal.kmFee,
+        totalValue: osOriginal.totalValue,
+        observations: osOriginal.observations,
+        equipamento: osOriginal.equipamento,
+        tipoDefeito: osOriginal.tipoDefeito,
+        modeloEquipamento: osOriginal.modeloEquipamento,
+        metragemAmbiente: osOriginal.metragemAmbiente,
+        tensaoEletrica: osOriginal.tensaoEletrica,
+        equipamentoAvaliado: osOriginal.equipamentoAvaliado,
+        diagnostico: osOriginal.diagnostico,
+        solucaoRecomendada: osOriginal.solucaoRecomendada,
+        isPaid: novoStatusPagamento,
+      );
+
+      await repository.save(osAtualizada);
+
+      _ordens.removeWhere((os) => os.id == osAtualizada.id);
+      _ordens.add(osAtualizada);
+
+      _ordens.sort((a, b) => b.id.compareTo(a.id));
+
+      notifyListeners();
+    } catch (e) {
+      print("Erro ao atualizar pagamento: $e");
+      rethrow;
+    }
+  }
 
   List<OrdemServico> buscarOrdensDoCliente(String clientId) {
     return _ordens.where((os) => os.clientId == clientId).toList();
@@ -145,7 +188,6 @@ try {
     return ordensPendentes.fold(0.0, (total, os) => total + os.totalValue);
   }
 
-
   Future<({double distanciaKm, double taxa})> calcularKmParaCliente(
     String enderecoCliente,
     String city,
@@ -154,5 +196,4 @@ try {
     final useCase = CalcKmFeeUseCase(taxaPorKm: _taxaKm);
     return await useCase.executar(enderecoCliente, city, state);
   }
-
 }

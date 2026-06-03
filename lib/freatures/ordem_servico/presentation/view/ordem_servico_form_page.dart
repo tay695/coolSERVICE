@@ -28,9 +28,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   String? _estadoClienteAtual;
 
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
-  OrderStatus _statusSelecionado = OrderStatus.open;
+  OrderStatus _statusSelecionado = OrderStatus.aberto;
   bool _isExternal = false;
-  bool _isPaid = false;
 
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
@@ -72,7 +71,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _diagnosticoController.text = os.diagnostico ?? '';
       _solucaoRecomendadaController.text = os.solucaoRecomendada ?? '';
       _statusSelecionado = os.status;
-      _isPaid = os.isPaid;
     }
   }
 
@@ -92,7 +90,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     super.dispose();
   }
 
-  // RF-05.4 / RF-05.5: GPS + Nominatim + OSRM
   Future<void> _calcularKmPeloGps() async {
     if (_clienteSelecionadoId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +103,11 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     try {
       final resultado = await context
           .read<OrdemServicoViewModel>()
-          .calcularKmParaCliente(_enderecoClienteAtual!, _cidadeClienteAtual!, _estadoClienteAtual!);
+          .calcularKmParaCliente(
+            _enderecoClienteAtual!,
+            _cidadeClienteAtual!,
+            _estadoClienteAtual!,
+          );
 
       setState(() {
         _kmDistanceController.text = resultado.distanciaKm.toStringAsFixed(2);
@@ -126,9 +127,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
       }
     } finally {
       setState(() => _loadingGps = false);
@@ -273,17 +274,19 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   value: _clienteSelecionadoId,
                   decoration: _fieldDecoration('Selecione o cliente *'),
                   items: viewModelClientes.clients
-                      .map((c) => DropdownMenuItem(
-                            value: c.id,
-                            child: Text(c.name),
-                          ))
+                      .map(
+                        (c) =>
+                            DropdownMenuItem(value: c.id, child: Text(c.name)),
+                      )
                       .toList(),
                   validator: (value) =>
                       value == null ? 'Por favor, selecione um cliente' : null,
                   onChanged: (val) {
                     setState(() {
                       _clienteSelecionadoId = val;
-                      final cliente = viewModelClientes.clients.firstWhere((c) => c.id == val);
+                      final cliente = viewModelClientes.clients.firstWhere(
+                        (c) => c.id == val,
+                      );
                       _enderecoClienteAtual = cliente.address;
                       _cidadeClienteAtual = cliente.city;
                       _estadoClienteAtual = cliente.state;
@@ -295,10 +298,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   value: _funcionarioSelecionadoId,
                   decoration: _fieldDecoration('Alocar funcionário/técnico *'),
                   items: viewModelFuncionarios.funcionarios
-                      .map((f) => DropdownMenuItem(
-                            value: f.id,
-                            child: Text(f.name),
-                          ))
+                      .map(
+                        (f) =>
+                            DropdownMenuItem(value: f.id, child: Text(f.name)),
+                      )
                       .toList(),
                   validator: (value) =>
                       value == null ? 'Por favor, aloque um funcionário' : null,
@@ -310,21 +313,23 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   value: _servicoSelecionadoId,
                   decoration: _fieldDecoration('Serviço a ser prestado *'),
                   items: viewModelServicos.services
-                      .map((s) => DropdownMenuItem(
-                            value: s.id,
-                            child: Text(s.name),
-                          ))
+                      .map(
+                        (s) =>
+                            DropdownMenuItem(value: s.id, child: Text(s.name)),
+                      )
                       .toList(),
                   validator: (value) => (value == null && !isEditing)
                       ? 'Por favor, selecione um serviço'
                       : null,
                   onChanged: (novoServicoId) {
                     if (novoServicoId != null) {
-                      final servico = viewModelServicos.services
-                          .firstWhere((s) => s.id == novoServicoId);
+                      final servico = viewModelServicos.services.firstWhere(
+                        (s) => s.id == novoServicoId,
+                      );
                       setState(() {
                         _servicoSelecionadoId = novoServicoId;
-                        _basePriceController.text = servico.basePrice.toString();
+                        _basePriceController.text = servico.basePrice
+                            .toString();
                         _isExternal = servico.isExternal;
                         _tipoSelecionado = TipoAtendimento.values.firstWhere(
                           (t) => t.name == servico.tipoAtendimento.name,
@@ -393,21 +398,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       color: AppColors.azulGelo.withOpacity(0.5),
                     ),
                   ),
-                  child: SwitchListTile(
-                    title: const Text(
-                      'Serviço externo',
-                      style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: const Text(
-                      'Cobrar deslocamento por KM?',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    value: _isExternal,
-                    activeColor: AppColors.cianoFrio,
-                    onChanged: (valor) =>
-                        setState(() => _isExternal = valor),
-                  ),
                 ),
                 if (_isExternal) ...[
                   const SizedBox(height: 12),
@@ -424,8 +414,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                           ),
                           validator: (value) =>
                               (_isExternal && (value == null || value.isEmpty))
-                                  ? 'Insira a quilometragem'
-                                  : null,
+                              ? 'Insira a quilometragem'
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -435,7 +425,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                               child: SizedBox(
                                 width: 24,
                                 height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             )
                           : IconButton(
@@ -521,51 +513,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   ),
                 ],
               ),
-
-            // STATUS DO SERVIÇO E PAGAMENTO
-            _buildSectionCard(
-              label: 'Gestão e Faturamento',
-              children: [
-                DropdownButtonFormField<OrderStatus>(
-                  value: _statusSelecionado,
-                  decoration: _fieldDecoration('Status do Serviço'),
-                  items: OrderStatus.values.map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status.name.toUpperCase()),
-                    );
-                  }).toList(),
-                  onChanged: (val) => setState(() => _statusSelecionado = val!),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.noiteArtica : AppColors.brancoGelo,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: _isPaid ? Colors.green.withOpacity(0.5) : Colors.red.withOpacity(0.5),
-                    ),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text(
-                      'Pagamento Confirmado?',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: Text(
-                      _isPaid ? 'O cliente já realizou o pagamento.' : 'Aguardando faturamento/pagamento.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _isPaid ? Colors.green : Colors.red,
-                      ),
-                    ),
-                    value: _isPaid,
-                    activeColor: Colors.green,
-                    onChanged: (valor) => setState(() => _isPaid = valor),
-                  ),
-                ),
-              ],
-            ),
-            
             // OBSERVAÇÕES
             _buildSectionCard(
               label: 'Observações Gerais',
@@ -599,15 +546,21 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 icon: const Icon(Icons.check_rounded, size: 16),
                 label: Text(
-                  isEditing ? 'Atualizar OS' : 'Salvar nova OS',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  isEditing ? 'Atualizar OS' : 'Salvar  OS',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final cleanPriceText = _basePriceController.text.replaceAll('R\$ ', '').trim();
+                    final cleanPriceText = _basePriceController.text
+                        .replaceAll('R\$ ', '')
+                        .trim();
                     final basePrice = double.tryParse(cleanPriceText) ?? 0.0;
                     final kmDist = _isExternal
-                        ? (double.tryParse(_kmDistanceController.text.trim()) ?? 0.0)
+                        ? (double.tryParse(_kmDistanceController.text.trim()) ??
+                              0.0)
                         : 0.0;
 
                     final idOrdem = isEditing
@@ -626,7 +579,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       serviceBasePrice: basePrice,
                       kmFee: 0.0,
                       totalValue: 0.0,
-                      isPaid: _isPaid,
                       observations: _observationsController.text.trim().isEmpty
                           ? null
                           : _observationsController.text.trim(),
@@ -636,33 +588,43 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       tipoDefeito: _tipoDefeitoController.text.trim().isEmpty
                           ? null
                           : _tipoDefeitoController.text.trim(),
-                      modeloEquipamento: _modeloEquipamentoController.text.trim().isEmpty
+                      modeloEquipamento:
+                          _modeloEquipamentoController.text.trim().isEmpty
                           ? null
                           : _modeloEquipamentoController.text.trim(),
-                      metragemAmbiente: _metragemAmbienteController.text.trim().isEmpty
+                      metragemAmbiente:
+                          _metragemAmbienteController.text.trim().isEmpty
                           ? null
                           : _metragemAmbienteController.text.trim(),
-                      tensaoEletrica: _tensaoEletricaController.text.trim().isEmpty
+                      tensaoEletrica:
+                          _tensaoEletricaController.text.trim().isEmpty
                           ? null
                           : _tensaoEletricaController.text.trim(),
-                      equipamentoAvaliado: _equipamentoAvaliadoController.text.trim().isEmpty
+                      equipamentoAvaliado:
+                          _equipamentoAvaliadoController.text.trim().isEmpty
                           ? null
                           : _equipamentoAvaliadoController.text.trim(),
                       diagnostico: _diagnosticoController.text.trim().isEmpty
                           ? null
                           : _diagnosticoController.text.trim(),
-                      solucaoRecomendada: _solucaoRecomendadaController.text.trim().isEmpty
+                      solucaoRecomendada:
+                          _solucaoRecomendadaController.text.trim().isEmpty
                           ? null
                           : _solucaoRecomendadaController.text.trim(),
                     );
 
-                    await context.read<OrdemServicoViewModel>().salvarOrdem(osPronta);
+                    await context.read<OrdemServicoViewModel>().salvarOrdem(
+                      osPronta,
+                      isPaid: isEditing ? widget.osParaEditar!.isPaid : false,
+                    );
 
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            isEditing ? 'Ordem atualizada com sucesso!' : 'Ordem de serviço cadastrada!',
+                            isEditing
+                                ? 'Ordem atualizada com sucesso!'
+                                : 'Ordem de serviço cadastrada!',
                           ),
                           backgroundColor: AppColors.primary,
                         ),

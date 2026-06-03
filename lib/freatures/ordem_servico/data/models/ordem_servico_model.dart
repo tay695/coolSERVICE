@@ -22,7 +22,7 @@ class OrdemServicoModel extends OrdemServico {
     super.equipamentoAvaliado,
     super.diagnostico,
     super.solucaoRecomendada,
-    required bool isPaid,
+    required super.isPaid,
   });
 
   Map<String, dynamic> toMap() {
@@ -47,7 +47,7 @@ class OrdemServicoModel extends OrdemServico {
       'equipamentoAvaliado': equipamentoAvaliado,
       'diagnostico': diagnostico,
       'solucaoRecomendada': solucaoRecomendada,
-      'isPaid': isPaid,
+      'isPaid': isPaid ? 1 : 0,
     };
   }
 
@@ -75,7 +75,7 @@ class OrdemServicoModel extends OrdemServico {
       equipamentoAvaliado: map['equipamentoAvaliado'],
       diagnostico: map['diagnostico'],
       solucaoRecomendada: map['solucaoRecomendada'],
-      isPaid: map['isPaid'],
+      isPaid: map['isPaid'] == 1,
     );
   }
 }
