@@ -16,6 +16,8 @@ class SQLiteClientRepository implements IClientRepository {
       name: client.name,
       cpfCnpj: client.cpfCnpj,
       address: client.address,
+      city: client.city,
+      state: client.state,
       phone: client.phone,
       email: client.email,
     );

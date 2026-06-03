@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class OrdemServicoFormPage extends StatefulWidget {
-  const OrdemServicoFormPage({super.key});
+  // Verificação para ver se a OS será editada ou se é a criação de uma nova OS
+  final OrdemServico? osParaEditar;
+  const OrdemServicoFormPage({super.key, this.osParaEditar});
 
   @override
   State<OrdemServicoFormPage> createState() => _OrdemServicoFormPageState();
@@ -20,29 +22,57 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   String? _clienteSelecionadoId;
   String? _funcionarioSelecionadoId;
   String? _servicoSelecionadoId;
+  bool _loadingGps = false;
+  String? _enderecoClienteAtual;
+  String? _cidadeClienteAtual;
+  String? _estadoClienteAtual;
 
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
-  final OrderStatus _statusSelecionado = OrderStatus.open;
+  OrderStatus _statusSelecionado = OrderStatus.aberto;
   bool _isExternal = false;
 
-  // Campos base
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
   final _observationsController = TextEditingController();
 
-  // Campos específicos de Manutenção
+  // Campos específicos
   final _equipamentoController = TextEditingController();
   final _tipoDefeitoController = TextEditingController();
-
-  // Campos específicos de Instalação
   final _modeloEquipamentoController = TextEditingController();
   final _metragemAmbienteController = TextEditingController();
   final _tensaoEletricaController = TextEditingController();
-
-  // Campos específicos de Visita Técnica
   final _equipamentoAvaliadoController = TextEditingController();
   final _diagnosticoController = TextEditingController();
   final _solucaoRecomendadaController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.osParaEditar != null) {
+      final os = widget.osParaEditar!;
+      _clienteSelecionadoId = os.clientId;
+      _funcionarioSelecionadoId = os.employeeId;
+      _tipoSelecionado = os.tipoAtendimento;
+      _statusSelecionado = os.status;
+      _isExternal = os.isExternal;
+
+      _basePriceController.text = os.serviceBasePrice.toString();
+      if (os.kmDistance > 0) {
+        _kmDistanceController.text = os.kmDistance.toString();
+      }
+
+      _observationsController.text = os.observations ?? '';
+      _equipamentoController.text = os.equipamento ?? '';
+      _tipoDefeitoController.text = os.tipoDefeito ?? '';
+      _modeloEquipamentoController.text = os.modeloEquipamento ?? '';
+      _metragemAmbienteController.text = os.metragemAmbiente ?? '';
+      _tensaoEletricaController.text = os.tensaoEletrica ?? '';
+      _equipamentoAvaliadoController.text = os.equipamentoAvaliado ?? '';
+      _diagnosticoController.text = os.diagnostico ?? '';
+      _solucaoRecomendadaController.text = os.solucaoRecomendada ?? '';
+      _statusSelecionado = os.status;
+    }
+  }
 
   @override
   void dispose() {
@@ -58,6 +88,52 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     _diagnosticoController.dispose();
     _solucaoRecomendadaController.dispose();
     super.dispose();
+  }
+
+  Future<void> _calcularKmPeloGps() async {
+    if (_clienteSelecionadoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione um cliente primeiro.')),
+      );
+      return;
+    }
+
+    setState(() => _loadingGps = true);
+
+    try {
+      final resultado = await context
+          .read<OrdemServicoViewModel>()
+          .calcularKmParaCliente(
+            _enderecoClienteAtual!,
+            _cidadeClienteAtual!,
+            _estadoClienteAtual!,
+          );
+
+      setState(() {
+        _kmDistanceController.text = resultado.distanciaKm.toStringAsFixed(2);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Rota calculada: ${resultado.distanciaKm.toStringAsFixed(2)} km — '
+              'Taxa: R\$ ${resultado.taxa.toStringAsFixed(2)}',
+            ),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    } finally {
+      setState(() => _loadingGps = false);
+    }
   }
 
   InputDecoration _fieldDecoration(String label, {String? prefix}) {
@@ -139,8 +215,14 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     final viewModelServicos = context.watch<ServiceViewModel>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final isEditing = widget.osParaEditar != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Nova Ordem de Serviço')),
+      appBar: AppBar(
+        title: Text(
+          isEditing ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço',
+        ),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -159,31 +241,37 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
               child: Column(
                 children: [
-                  const Text(
-                    'Abrir ordem de serviço',
-                    style: TextStyle(
+                  Text(
+                    isEditing
+                        ? 'Atualizar OS #${widget.osParaEditar!.id.substring(widget.osParaEditar!.id.length - 5)}'
+                        : 'Abrir ordem de serviço',
+                    style: const TextStyle(
                       color: AppColors.brancoPuro,
                       fontSize: 17,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Preencha os dados para criar a OS',
-                    style: TextStyle(color: AppColors.azulGelo, fontSize: 13),
+                  Text(
+                    isEditing
+                        ? 'O técnico pode atualizar os dados abaixo'
+                        : 'Preencha os dados para criar a OS',
+                    style: const TextStyle(
+                      color: AppColors.azulGelo,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // CARD 1: VÍNCULOS
             _buildSectionCard(
-              label: 'Vínculos',
+              label: 'Dados da OS',
               children: [
                 DropdownButtonFormField<String>(
-                  value: _clienteSelecionadoId,
-                  decoration: _fieldDecoration('Selecione o cliente'),
+                  initialValue: _clienteSelecionadoId,
+                  decoration: _fieldDecoration('cliente *'),
                   items: viewModelClientes.clients
                       .map(
                         (c) =>
@@ -192,13 +280,22 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       .toList(),
                   validator: (value) =>
                       value == null ? 'Por favor, selecione um cliente' : null,
-                  onChanged: (val) =>
-                      setState(() => _clienteSelecionadoId = val),
+                  onChanged: (val) {
+                    setState(() {
+                      _clienteSelecionadoId = val;
+                      final cliente = viewModelClientes.clients.firstWhere(
+                        (c) => c.id == val,
+                      );
+                      _enderecoClienteAtual = cliente.address;
+                      _cidadeClienteAtual = cliente.city;
+                      _estadoClienteAtual = cliente.state;
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _funcionarioSelecionadoId,
-                  decoration: _fieldDecoration('Alocar funcionário/técnico'),
+                  initialValue: _funcionarioSelecionadoId,
+                  decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
                       .map(
                         (f) =>
@@ -212,16 +309,17 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _servicoSelecionadoId,
-                  decoration: _fieldDecoration(
-                    'Sugestão de serviço do catálogo (Opcional)',
-                  ),
+                  initialValue: _servicoSelecionadoId,
+                  decoration: _fieldDecoration('Serviço'),
                   items: viewModelServicos.services
                       .map(
                         (s) =>
                             DropdownMenuItem(value: s.id, child: Text(s.name)),
                       )
                       .toList(),
+                  validator: (value) => (value == null && !isEditing)
+                      ? 'Por favor, selecione um serviço'
+                      : null,
                   onChanged: (novoServicoId) {
                     if (novoServicoId != null) {
                       final servico = viewModelServicos.services.firstWhere(
@@ -231,9 +329,11 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                         _servicoSelecionadoId = novoServicoId;
                         _basePriceController.text = servico.basePrice
                             .toString();
-                        _tipoSelecionado =
-                            servico.tipoAtendimento as TipoAtendimento;
                         _isExternal = servico.isExternal;
+                        _tipoSelecionado = TipoAtendimento.values.firstWhere(
+                          (t) => t.name == servico.tipoAtendimento.name,
+                          orElse: () => TipoAtendimento.manutencao,
+                        );
                       });
                     }
                   },
@@ -241,7 +341,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               ],
             ),
 
-            // CARD 2: VALORES E LOGÍSTICA
             _buildSectionCard(
               label: 'Informações básicas e Valores',
               children: [
@@ -280,15 +379,12 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 TextFormField(
                   controller: _basePriceController,
                   decoration: _fieldDecoration(
-                    'Preço base cobrado nesta OS',
+                    'Preço base cobrado nesta OS (Opcional)',
                     prefix: 'R\$ ',
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Insira o valor cobrado'
-                      : null,
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -301,46 +397,61 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       color: AppColors.azulGelo.withOpacity(0.5),
                     ),
                   ),
-                  child: SwitchListTile(
-                    title: const Text(
-                      'Serviço externo',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    subtitle: const Text(
-                      'Cobrar deslocamento por KM?',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    value: _isExternal,
-                    activeColor: AppColors.cianoFrio,
-                    onChanged: (valor) => setState(() => _isExternal = valor),
-                  ),
                 ),
                 if (_isExternal) ...[
                   const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _kmDistanceController,
-                    decoration: _fieldDecoration(
-                      'Distância total ida/volta (km)',
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (value) =>
-                        (_isExternal && (value == null || value.isEmpty))
-                        ? 'Insira a quilometragem'
-                        : null,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _kmDistanceController,
+                          decoration: _fieldDecoration(
+                            'Distância até o cliente (km)',
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (value) =>
+                              (_isExternal && (value == null || value.isEmpty))
+                              ? 'Insira a quilometragem'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _loadingGps
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              tooltip: 'Calcular pelo GPS',
+                              icon: const Icon(
+                                Icons.my_location,
+                                color: AppColors.cianoFrio,
+                              ),
+                              onPressed: _calcularKmPeloGps,
+                            ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Toque no ícone para calcular a rota real até o cliente',
+                    style: TextStyle(fontSize: 11, color: AppColors.azulGelo),
                   ),
                 ],
               ],
             ),
 
-            // CAMPOS DINÂMICOS CONFORME O TIPO DE ATENDIMENTO
+            // CAMPOS DINÂMICOS
             if (_tipoSelecionado == TipoAtendimento.manutencao)
               _buildSectionCard(
-                label: 'Dados da Manutenção',
+                label: 'Dados da Manutenção (Preenchido pelo Técnico)',
                 children: [
                   TextFormField(
                     controller: _equipamentoController,
@@ -358,7 +469,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
 
             if (_tipoSelecionado == TipoAtendimento.instalacao)
               _buildSectionCard(
-                label: 'Dados da Instalação',
+                label: 'Dados da Instalação (Preenchido pelo Técnico)',
                 children: [
                   TextFormField(
                     controller: _modeloEquipamentoController,
@@ -381,7 +492,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
 
             if (_tipoSelecionado == TipoAtendimento.visitaTecnica)
               _buildSectionCard(
-                label: 'Laudo da Visita Técnica',
+                label: 'Laudo da Visita Técnica (Preenchido pelo Técnico)',
                 children: [
                   TextFormField(
                     controller: _equipamentoAvaliadoController,
@@ -401,24 +512,19 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   ),
                 ],
               ),
-
-            // OBSERVAÇÕES GERAIS
+            // OBSERVAÇÕES
             _buildSectionCard(
               label: 'Observações Gerais',
               children: [
                 TextFormField(
                   controller: _observationsController,
-                  decoration: _fieldDecoration(
-                    'Notas adicionais sobre a ordem de serviço',
-                  ),
+                  decoration: _fieldDecoration('Notas adicionais'),
                   maxLines: 3,
                 ),
               ],
             ),
 
             const SizedBox(height: 12),
-
-            // Botão Cancelar
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
@@ -427,8 +533,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               ),
             ),
             const SizedBox(height: 8),
-
-            // Botão Principal de Salvamento
             SizedBox(
               height: 52,
               child: ElevatedButton.icon(
@@ -440,25 +544,30 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   ),
                 ),
                 icon: const Icon(Icons.check_rounded, size: 16),
-                label: const Text(
-                  'Salvar ordem de serviço',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                label: Text(
+                  isEditing ? 'Atualizar OS' : 'Salvar  OS',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    // Sanitização de strings para double com segurança
                     final cleanPriceText = _basePriceController.text
                         .replaceAll('R\$ ', '')
                         .trim();
                     final basePrice = double.tryParse(cleanPriceText) ?? 0.0;
-
                     final kmDist = _isExternal
                         ? (double.tryParse(_kmDistanceController.text.trim()) ??
                               0.0)
                         : 0.0;
 
-                    final novaOS = OrdemServico(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    final idOrdem = isEditing
+                        ? widget.osParaEditar!.id
+                        : DateTime.now().millisecondsSinceEpoch.toString();
+
+                    final osPronta = OrdemServico(
+                      id: idOrdem,
                       clientId: _clienteSelecionadoId!,
                       employeeId: _funcionarioSelecionadoId!,
                       technicianId: _funcionarioSelecionadoId,
@@ -467,8 +576,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       isExternal: _isExternal,
                       kmDistance: kmDist,
                       serviceBasePrice: basePrice,
-                      kmFee: 0.0, // Tratado dinamicamente pela ViewModel
-                      totalValue: 0.0, // Tratado dinamicamente pela ViewModel
+                      kmFee: 0.0,
+                      totalValue: 0.0,
                       observations: _observationsController.text.trim().isEmpty
                           ? null
                           : _observationsController.text.trim(),
@@ -503,23 +612,23 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                           : _solucaoRecomendadaController.text.trim(),
                     );
 
-                    // Executa a persistência e regras matemáticas de KM pela ViewModel
                     await context.read<OrdemServicoViewModel>().salvarOrdem(
-                      novaOS,
+                      osPronta,
+                      isPaid: isEditing ? widget.osParaEditar!.isPaid : false,
                     );
 
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Ordem de serviço cadastrada com sucesso!',
+                            isEditing
+                                ? 'Ordem atualizada com sucesso!'
+                                : 'Ordem de serviço cadastrada!',
                           ),
                           backgroundColor: AppColors.primary,
                         ),
                       );
-                      Navigator.pop(
-                        context,
-                      ); // Retorna para a tela de listagem atualizada
+                      Navigator.pop(context);
                     }
                   }
                 },

@@ -1,4 +1,4 @@
-enum UserRole { admin, tecnico, funcionario, technician }
+enum UserRole { admin,  funcionario}
 
 class Funcionario {
   final String id;
@@ -10,7 +10,8 @@ class Funcionario {
   final bool isActive;
   final String username;   
   final String passwordHash;
-
+  final String? firebaseUid;
+  final String? fcmToken;
   Funcionario({
     required this.id,
     required this.name,
@@ -20,6 +21,8 @@ class Funcionario {
     required this.role,
     required this.isActive,
     required this.username, 
-    required this.passwordHash
+    required this.passwordHash,
+    this.firebaseUid,
+    this.fcmToken,
   });
 }

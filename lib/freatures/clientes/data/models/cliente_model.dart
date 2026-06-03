@@ -6,6 +6,8 @@ class ClientModel extends Client {
     required super.name,
     required super.cpfCnpj,
     required super.address,
+    required super.city,
+    required super.state,
     required super.phone,
     required super.email,
   });
@@ -16,6 +18,8 @@ class ClientModel extends Client {
       'name': name,
       'cpf_cnpj': cpfCnpj,
       'address': address,
+      'city': city,
+      'state': state,
       'phone': phone,
       'email': email,
     };
@@ -27,6 +31,8 @@ class ClientModel extends Client {
       name: map['name'] ?? '',
       cpfCnpj: map['cpf_cnpj'] ?? '',
       address: map['address'] ?? '',
+      city: map['city'] ?? '',
+      state: map['state'] ?? '',
       phone: map['phone'] ?? '',
       email: map['email'] ?? '',
     );

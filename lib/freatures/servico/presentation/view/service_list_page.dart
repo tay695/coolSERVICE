@@ -1,4 +1,4 @@
-import 'package:coolservice/core/widgets/menu_lateral.dart';
+import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_form_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 class ServiceListPage extends StatefulWidget {
   final Funcionario funcionario;
+
   const ServiceListPage({super.key, required this.funcionario});
 
   @override
@@ -15,7 +16,6 @@ class ServiceListPage extends StatefulWidget {
 
 class _ServiceListPageState extends State<ServiceListPage> {
   @override
-
   void initState() {
     super.initState();
     // Carrega os serviços quando a página é inicializada
@@ -30,90 +30,98 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Serviços')),
-      drawer: MenuLateral(funcionario: widget.funcionario),
+      bottomNavigationBar: MenuInferior(
+        funcionario: widget.funcionario,
+        currentIndex: 3,
+      ),
       body: viewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : viewModel.services.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.handyman,
-                        size: 64,
-                        color: Colors.grey,
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.handyman, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Nenhum serviço cadastrado',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 24),
+                  if (widget.funcionario.role == UserRole.admin)
+                    ElevatedButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ServiceFormPage(),
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Nenhum serviço cadastrado',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 24),
-                      if (widget.funcionario.role == UserRole.admin)
-                      ElevatedButton.icon(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ServiceFormPage(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Adicionar Serviço'),
+                    ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              itemCount: viewModel.services.length,
+              itemBuilder: (context, index) {
+                final service = viewModel.services[index];
+                return Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    title: Text(service.name),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(service.description),
+                        const SizedBox(height: 4),
+                        Text(
+                          'R\$ ${service.basePrice.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
                           ),
                         ),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Adicionar Serviço'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: viewModel.services.length,
-                  itemBuilder: (context, index) {
-                    final service = viewModel.services[index];
-                    return Card(
-                      margin: const EdgeInsets.all(8.0),
-                      child: ListTile(
-                        title: Text(service.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(service.description),
-                            const SizedBox(height: 4),
-                            Text(
-                              'R\$ ${service.basePrice.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                            Text(
-                              service.tipoAtendimento.name,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                        Text(
+                          service.tipoAtendimento.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                        trailing: widget.funcionario.role == UserRole.admin ? PopupMenuButton(
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              child: const Text('Editar'),
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      ServiceFormPage(service: service),
+                      ],
+                    ),
+                    trailing: widget.funcionario.role == UserRole.admin
+                        ? PopupMenuButton(
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'editar',
+                                child: const Text('Editar'),
+                              ),
+                              PopupMenuItem(
+                                value: 'deletar',
+                                child: const Text(
+                                  'Deletar',
+                                  style: TextStyle(color: Colors.red),
                                 ),
                               ),
-                            ),
-                            PopupMenuItem(
-                              child: const Text(
-                                'Deletar',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                              onTap: () {
+                            ],
+                            onSelected: (String value) async {
+                              if (!mounted) return;
+
+                              if (value == 'editar') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ServiceFormPage(service: service),
+                                  ),
+                                );
+                              } else if (value == 'deletar') {
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AlertDialog(
+                                  builder: (dialogContext) => AlertDialog(
                                     title: const Text('Confirmar Exclusão'),
                                     content: Text(
                                       'Deseja excluir o serviço "${service.name}"?',
@@ -121,13 +129,13 @@ class _ServiceListPageState extends State<ServiceListPage> {
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
-                                            Navigator.pop(context),
+                                            Navigator.pop(dialogContext),
                                         child: const Text('Cancelar'),
                                       ),
                                       TextButton(
                                         onPressed: () {
                                           viewModel.deleteService(service.id);
-                                          Navigator.pop(context);
+                                          Navigator.pop(dialogContext);
                                         },
                                         child: const Text(
                                           'Deletar',
@@ -137,23 +145,23 @@ class _ServiceListPageState extends State<ServiceListPage> {
                                     ],
                                   ),
                                 );
-                              },
-                            ),
-                          ],
-                        ):null
-                      ),
-                    );
-                  },
-                ),
+                              }
+                            },
+                          )
+                        : null,
+                  ),
+                );
+              },
+            ),
       floatingActionButton: widget.funcionario.role == UserRole.admin
-    ? FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ServiceFormPage()),
-        ),
-        child: const Icon(Icons.add),
-      )
-    : null,
+          ? FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ServiceFormPage()),
+              ),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

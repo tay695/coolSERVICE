@@ -3,9 +3,10 @@ import 'package:coolservice/freatures/funcionarios/presentation/view_model/funci
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
-import 'package:coolservice/core/widgets/menu_lateral.dart';
 
 import 'package:coolservice/core/theme/app_theme.dart';
+
+import '../../../../core/widgets/menu_inferior.dart';
 
 class FuncionarioListPage extends StatefulWidget {
   final Funcionario funcionario;
@@ -39,7 +40,10 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
         foregroundColor: AppColors.brancoPuro,
         elevation: 0,
       ),
-      drawer: MenuLateral(funcionario: funcionario),
+      bottomNavigationBar: MenuInferior(
+        funcionario: funcionario,
+        currentIndex: 1,
+      ),
       body: Column(
         children: [
           // Header
@@ -56,10 +60,18 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                 style: const TextStyle(color: AppColors.brancoPuro),
                 decoration: InputDecoration(
                   hintText: 'Buscar por nome ou CPF...',
-                  hintStyle: TextStyle(color: AppColors.azulGelo.withOpacity(0.7)),
-                  prefixIcon: const Icon(Icons.search, color: AppColors.azulGelo),
+                  hintStyle: TextStyle(
+                    color: AppColors.azulGelo.withOpacity(0.7),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppColors.azulGelo,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
                 onChanged: (value) => viewModel.searchFuncionario(value),
               ),
@@ -75,7 +87,9 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                   '${viewModel.funcionarios.length} funcionário(s)',
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? AppColors.cinzaNeve : AppColors.azulProfundo,
+                    color: isDark
+                        ? AppColors.cinzaNeve
+                        : AppColors.azulProfundo,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -90,10 +104,19 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.badge_outlined, size: 64, color: AppColors.cinzaNeve.withOpacity(0.5)),
+                        Icon(
+                          Icons.badge_outlined,
+                          size: 64,
+                          color: AppColors.cinzaNeve.withOpacity(0.5),
+                        ),
                         const SizedBox(height: 16),
-                        const Text('Nenhum funcionário encontrado',
-                            style: TextStyle(color: AppColors.cinzaNeve, fontSize: 15)),
+                        const Text(
+                          'Nenhum funcionário encontrado',
+                          style: TextStyle(
+                            color: AppColors.cinzaNeve,
+                            fontSize: 15,
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -105,9 +128,13 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.azulProfundo.withOpacity(0.4) : AppColors.brancoPuro,
+                          color: isDark
+                              ? AppColors.azulProfundo.withOpacity(0.4)
+                              : AppColors.brancoPuro,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.azulGelo.withOpacity(0.3)),
+                          border: Border.all(
+                            color: AppColors.azulGelo.withOpacity(0.3),
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -120,11 +147,15 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: AppColors.primary.withOpacity(0.12),
-                                  border: Border.all(color: AppColors.azulGelo.withOpacity(0.4)),
+                                  border: Border.all(
+                                    color: AppColors.azulGelo.withOpacity(0.4),
+                                  ),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    f.name.isNotEmpty ? f.name[0].toUpperCase() : '?',
+                                    f.name.isNotEmpty
+                                        ? f.name[0].toUpperCase()
+                                        : '?',
                                     style: const TextStyle(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.bold,
@@ -144,30 +175,48 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 15,
-                                        color: isDark ? AppColors.brancoPuro : AppColors.noiteArtica,
+                                        color: isDark
+                                            ? AppColors.brancoPuro
+                                            : AppColors.noiteArtica,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       f.especialty,
-                                      style: const TextStyle(fontSize: 12, color: AppColors.cinzaNeve),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.cinzaNeve,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: f.role == UserRole.admin
-                                            ? AppColors.cianoFrio.withOpacity(0.15)
-                                            : AppColors.azulGelo.withOpacity(0.15),
+                                            ? AppColors.cianoFrio.withOpacity(
+                                                0.15,
+                                              )
+                                            : AppColors.azulGelo.withOpacity(
+                                                0.15,
+                                              ),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                           color: f.role == UserRole.admin
-                                              ? AppColors.cianoFrio.withOpacity(0.4)
-                                              : AppColors.azulGelo.withOpacity(0.4),
+                                              ? AppColors.cianoFrio.withOpacity(
+                                                  0.4,
+                                                )
+                                              : AppColors.azulGelo.withOpacity(
+                                                  0.4,
+                                                ),
                                         ),
                                       ),
                                       child: Text(
-                                        f.role == UserRole.admin ? 'Administrador' : 'Funcionário',
+                                        f.role == UserRole.admin
+                                            ? 'Administrador'
+                                            : 'Funcionário',
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: f.role == UserRole.admin
@@ -187,23 +236,40 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                                     value: f.isActive,
                                     activeColor: AppColors.active,
                                     inactiveThumbColor: AppColors.inactive,
-                                    onChanged: (value) => viewModel.toggleActive(f.id, value),
+                                    onChanged: (value) =>
+                                        viewModel.toggleActive(f.id, value),
                                   ),
                                   if (isAdmin)
                                     GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => FuncionarioFormPage(funcionario: f),
-                                        ),
-                                      ).then((_) => context.read<FuncionarioViewModel>().listAll()),
+                                      onTap: () =>
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  FuncionarioFormPage(
+                                                    funcionario: f,
+                                                  ),
+                                            ),
+                                          ).then(
+                                            (_) => context
+                                                .read<FuncionarioViewModel>()
+                                                .listAll(),
+                                          ),
                                       child: Container(
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
-                                          color: AppColors.primary.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: AppColors.primary.withOpacity(
+                                            0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
-                                        child: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                                        child: const Icon(
+                                          Icons.edit_outlined,
+                                          size: 18,
+                                          color: AppColors.primary,
+                                        ),
                                       ),
                                     ),
                                 ],
@@ -226,7 +292,10 @@ class _FuncionarioListPageState extends State<FuncionarioListPage> {
                 MaterialPageRoute(builder: (_) => const FuncionarioFormPage()),
               ).then((_) => context.read<FuncionarioViewModel>().listAll()),
               icon: const Icon(Icons.person_add_outlined),
-              label: const Text('Novo funcionário', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: const Text(
+                'Novo funcionário',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             )
           : null,
     );

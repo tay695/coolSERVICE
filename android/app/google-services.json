@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "631326908525",
+    "project_id": "collservice",
+    "storage_bucket": "collservice.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:631326908525:android:ec787f4b96a61f6d65df64",
+        "android_client_info": {
+          "package_name": "com.example.coolservice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWMFq0QeJX1f8R8NLiWLTx0Trds_5r3q8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

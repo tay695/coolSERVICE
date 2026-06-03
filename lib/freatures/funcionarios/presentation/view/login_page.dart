@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:coolservice/core/presentation/view/dashboard_page.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:coolservice/core/services/notification_service.dart';
+import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -30,17 +34,81 @@ class _LoginPageState extends State<LoginPage> {
       _error = null;
     });
 
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
+
+    try {
+      final email = '$username@coolservice.app';
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      final repo = SQLiteFuncionarioRepository();
+      final todos = await repo.listAll();
+
+      final funcionario = todos.cast<Funcionario?>().firstWhere(
+        (f) => f!.username == username,
+        orElse: () => null,
+      );
+
+      setState(() => _isLoading = false);
+
+      if (funcionario == null) {
+        setState(() => _error = 'Usuário não encontrado localmente.');
+        return;
+      }
+
+      if (!funcionario.isActive) {
+        await FirebaseAuth.instance.signOut();
+        setState(() => _error = 'Usuário inativo. Contate o administrador.');
+        return;
+      }
+      if (funcionario.firebaseUid != null) {
+         final token = await NotificationService.getToken();
+         if (token != null) {
+           await context.read<FuncionarioViewModel>().saveFcmToken(
+             funcionario.firebaseUid!,
+             token,
+           );
+         }
+       }
+     
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DashboardPage(funcionario: funcionario),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() => _isLoading = false);
+
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
+        await _loginLocal(username, password);
+      } else if (e.code == 'wrong-password') {
+        setState(() => _error = 'Senha incorreta.');
+      } else {
+        setState(() => _error = 'Erro ao autenticar. Tente novamente.');
+      }
+    } catch (_) {
+      setState(() {
+        _isLoading = false;
+        _error = 'Erro inesperado. Tente novamente.';
+      });
+    }
+  }
+
+  Future<void> _loginLocal(String username, String password) async {
     final repo = SQLiteFuncionarioRepository();
     final todos = await repo.listAll();
 
     final funcionario = todos.cast<Funcionario?>().firstWhere(
       (f) =>
-          f!.username == _usernameController.text.trim() &&
-          f.passwordHash == hashSenha(_passwordController.text.trim()),
+          f!.username == username &&
+          f.passwordHash == hashSenha(password),
       orElse: () => null,
     );
-
-    setState(() => _isLoading = false);
 
     if (funcionario == null) {
       setState(() => _error = 'Usuário ou senha incorretos.');
@@ -65,7 +133,6 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // logo / ícone
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -79,16 +146,16 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ),
-               child: Image.asset(
-                'assets/images/logo.png',
-               width: 120,
-               height: 120,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                   Icons.build_circle_outlined,
-                   size: 64,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 120,
+                  height: 120,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.build_circle_outlined,
+                    size: 64,
                     color: AppColors.cianoFrio,
-                     ),
-                     ),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 32),
@@ -109,8 +176,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 40),
-
-              // campo usuário
+              
               TextField(
                 controller: _usernameController,
                 style: const TextStyle(color: AppColors.brancoPuro),
@@ -139,7 +205,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 16),
 
-              // campo senha
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -191,7 +256,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 32),
 
-              // botão
               SizedBox(
                 width: double.infinity,
                 height: 50,

@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onOpen: _ensureDB,
@@ -33,6 +33,8 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         cpf_cnpj TEXT NOT NULL,
         address TEXT NOT NULL,
+        city TEXT NOT NULL,
+        state TEXT NOT NULL,
         phone TEXT NOT NULL,
         email TEXT NOT NULL
       )
@@ -73,6 +75,7 @@ class DatabaseHelper {
       tensaoEletrica TEXT,
       equipamentoAvaliado TEXT,
       diagnostico TEXT,
+      isPaid INTEGER DEFAULT 0, 
       solucaoRecomendada TEXT,
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
