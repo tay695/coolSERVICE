@@ -41,6 +41,7 @@ class FuncionarioViewModel extends ChangeNotifier {
         'username': funcionario.username,
         'email': email,
         'criadoEm': FieldValue.serverTimestamp(),
+        'fcmToken': null,
       });
 
       // Salva localmente com uid
@@ -55,6 +56,7 @@ class FuncionarioViewModel extends ChangeNotifier {
         username: funcionario.username,
         passwordHash: funcionario.passwordHash,
         firebaseUid: uid,
+        fcmToken: null,
       );
       await _repository.save(comUid);
 
@@ -133,4 +135,9 @@ class FuncionarioViewModel extends ChangeNotifier {
     final digits = cpf.replaceAll(RegExp(r'\D'), '');
     return digits.substring(0, 6);
   }
+  Future<void> saveFcmToken(String firebaseUid, String token) async {
+  await _firestore.collection('funcionarios').doc(firebaseUid).update({
+    'fcmToken': token,
+  });
+}
 }

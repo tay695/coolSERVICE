@@ -11,6 +11,7 @@ class Funcionario {
   final String username;   
   final String passwordHash;
   final String? firebaseUid;
+  final String? fcmToken;
   Funcionario({
     required this.id,
     required this.name,
@@ -22,5 +23,6 @@ class Funcionario {
     required this.username, 
     required this.passwordHash,
     this.firebaseUid,
+    this.fcmToken,
   });
 }

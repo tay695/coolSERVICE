@@ -157,6 +157,7 @@ class MenuInferior extends StatelessWidget {
           icon: Icon(Icons.settings_outlined),
           selectedIcon: Icon(Icons.settings, color: AppColors.cianoFrio),
           label: 'Serv/Funci',
+
         ),
       ],
     );
