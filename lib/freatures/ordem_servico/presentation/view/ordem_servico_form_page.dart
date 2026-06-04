@@ -266,13 +266,12 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
             ),
             const SizedBox(height: 16),
 
-            // CARD 1: VÍNCULOS
             _buildSectionCard(
               label: 'Dados da OS',
               children: [
                 DropdownButtonFormField<String>(
-                  value: _clienteSelecionadoId,
-                  decoration: _fieldDecoration('Selecione o cliente *'),
+                  initialValue: _clienteSelecionadoId,
+                  decoration: _fieldDecoration('cliente *'),
                   items: viewModelClientes.clients
                       .map(
                         (c) =>
@@ -295,8 +294,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _funcionarioSelecionadoId,
-                  decoration: _fieldDecoration('Alocar funcionário/técnico *'),
+                  initialValue: _funcionarioSelecionadoId,
+                  decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
                   .where((f) => f.isActive)
                    .map(
@@ -310,8 +309,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _servicoSelecionadoId,
-                  decoration: _fieldDecoration('Serviço a ser prestado *'),
+                  initialValue: _servicoSelecionadoId,
+                  decoration: _fieldDecoration('Serviço'),
                   items: viewModelServicos.services
                       .map(
                         (s) =>
