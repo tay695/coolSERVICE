@@ -28,20 +28,33 @@ class _DashboardPageState extends State<DashboardPage> {
 void initState() {
   super.initState();
   _iniciarListenerOS();
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    context.read<FuncionarioViewModel>().listAllFromFirestore();
+    final isAdmin = widget.funcionario.role == UserRole.admin;
+    context.read<OrdemServicoViewModel>().carregarOrdensPorFuncionario(
+      widget.funcionario.id,
+       isAdmin: isAdmin,
+    );
+  });
+
 }
 
 void _iniciarListenerOS() {
   final funcionarioId = widget.funcionario.id;
-  
+  bool primeiraLeitura = true;
+
   _osListener = FirebaseFirestore.instance
       .collection('ordens_servico')
       .where('employeeId', isEqualTo: funcionarioId)
       .snapshots()
       .listen((snapshot) {
+    if (primeiraLeitura) {
+      primeiraLeitura = false;
+      return;
+    }
     for (final change in snapshot.docChanges) {
       if (change.type == DocumentChangeType.added) {
         NotificationService.showLocalNotification(
-          // cria mensagem fake para exibir
           RemoteMessage(
             notification: RemoteNotification(
               title: 'Nova Ordem de Serviço',

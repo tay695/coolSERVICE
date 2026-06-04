@@ -78,6 +78,7 @@ class FuncionarioViewModel extends ChangeNotifier {
     await listAll();
   }
 
+
   Future<void> updateFuncionario(Funcionario funcionario) async {
     await _repository.save(funcionario);
 
@@ -118,6 +119,50 @@ class FuncionarioViewModel extends ChangeNotifier {
     _funcionarios = await _repository.listAll();
     notifyListeners();
   }
+
+  Future<void> listAllFromFirestore() async {
+  try {
+    // carrega local primeiro
+    _funcionarios = await _repository.listAll();
+    notifyListeners();
+
+    // sincroniza com Firestore
+    final snapshot = await _firestore.collection('funcionarios').get();
+    if (snapshot.docs.isEmpty) return;
+
+    final funcionariosFirestore = snapshot.docs.map((doc) {
+      final d = doc.data();
+      return Funcionario(
+        id: d['id'] ?? doc.id,
+        name: d['name'] ?? '',
+        cpf: d['cpf'] ?? '',
+        especialty: d['especialty'] ?? '',
+        phone: d['phone'] ?? '',
+        role: UserRole.values.firstWhere(
+          (r) => r.name == d['role'],
+          orElse: () => UserRole.funcionario,
+        ),
+        isActive: d['isActive'] ?? true,
+        username: d['username'] ?? '',
+        passwordHash: d['passwordHash'] ?? '',
+        firebaseUid: doc.id,
+        fcmToken: d['fcmToken'],
+      );
+    }).toList();
+
+    // salva localmente
+    for (final f in funcionariosFirestore) {
+      await _repository.save(f);
+    }
+
+    _funcionarios = await _repository.listAll();
+    notifyListeners();
+  } catch (e) {
+    print('Erro ao carregar funcionários do Firestore: $e');
+  }
+}
+
+  
 
   Future<void> toggleActive(String id, bool isActive) async {
     await _repository.toggleActive(id, isActive);
