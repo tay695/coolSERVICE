@@ -33,6 +33,8 @@ class SQLiteOrdemServicoRepository implements IOrdemServicoRepository {
       diagnostico: ordem.diagnostico,
       solucaoRecomendada: ordem.solucaoRecomendada,
       isPaid: ordem.isPaid,
+      inData: ordem.inData,
+      outData: ordem.outData,
     );
 
     await db.insert(

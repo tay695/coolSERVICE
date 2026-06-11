@@ -70,40 +70,44 @@ class OrdemServicoViewModel extends ChangeNotifier {
         equipamentoAvaliado: novaOS.equipamentoAvaliado,
         diagnostico: novaOS.diagnostico,
         solucaoRecomendada: novaOS.solucaoRecomendada,
+        inData: novaOS.inData,
+        outData: novaOS.outData,
         isPaid: novaOS.isPaid,
       );
 
       await repository.save(osCompletaComValores);
       // Salva no Firestore
-try {
-  await FirebaseFirestore.instance
-      .collection('ordens_servico')
-      .doc(osCompletaComValores.id)
-      .set({
-    'id': osCompletaComValores.id,
-    'clientId': osCompletaComValores.clientId,
-    'employeeId': osCompletaComValores.employeeId,
-    'technicianId': osCompletaComValores.technicianId,
-    'status': osCompletaComValores.status.name,
-    'tipoAtendimento': osCompletaComValores.tipoAtendimento.name,
-    'isExternal': osCompletaComValores.isExternal,
-    'kmDistance': osCompletaComValores.kmDistance,
-    'serviceBasePrice': osCompletaComValores.serviceBasePrice,
-    'kmFee': osCompletaComValores.kmFee,
-    'totalValue': osCompletaComValores.totalValue,
-    'observations': osCompletaComValores.observations,
-    'criadoEm': FieldValue.serverTimestamp(),
-  });
-} catch (e) {
-  print('Erro ao salvar OS no Firestore: $e');
-}
+      try {
+        await FirebaseFirestore.instance
+            .collection('ordens_servico')
+            .doc(osCompletaComValores.id)
+            .set({
+              'id': osCompletaComValores.id,
+              'clientId': osCompletaComValores.clientId,
+              'employeeId': osCompletaComValores.employeeId,
+              'technicianId': osCompletaComValores.technicianId,
+              'status': osCompletaComValores.status.name,
+              'tipoAtendimento': osCompletaComValores.tipoAtendimento.name,
+              'isExternal': osCompletaComValores.isExternal,
+              'kmDistance': osCompletaComValores.kmDistance,
+              'serviceBasePrice': osCompletaComValores.serviceBasePrice,
+              'kmFee': osCompletaComValores.kmFee,
+              'totalValue': osCompletaComValores.totalValue,
+              'observations': osCompletaComValores.observations,
+              'inData': osCompletaComValores.inData,
+              'outData': osCompletaComValores.outData,
+              'criadoEm': FieldValue.serverTimestamp(),
+            });
+      } catch (e) {
+        print('Erro ao salvar OS no Firestore: $e');
+      }
       try {
         final funcionarioDoc = await FirebaseFirestore.instance
-        .collection('funcionarios')
-        .where('id', isEqualTo: osCompletaComValores.employeeId)
-        .limit(1)
-        .get();
-        
+            .collection('funcionarios')
+            .where('id', isEqualTo: osCompletaComValores.employeeId)
+            .limit(1)
+            .get();
+
         if (funcionarioDoc.docs.isNotEmpty) {
           final fcmToken = funcionarioDoc.docs.first.data()['fcmToken'];
           if (fcmToken != null) {
@@ -111,12 +115,12 @@ try {
               token: fcmToken,
               title: 'Nova Ordem de Serviço',
               body: 'Você foi alocado em uma nova OS.',
-              );
-              }
-              }
-              } catch (e) {
-                 print('Erro ao enviar notificação: $e');
-                 }
+            );
+          }
+        }
+      } catch (e) {
+        print('Erro ao enviar notificação: $e');
+      }
 
       _ordens.removeWhere((os) => os.id == osCompletaComValores.id);
       _ordens.add(osCompletaComValores);
@@ -156,6 +160,8 @@ try {
         equipamentoAvaliado: osOriginal.equipamentoAvaliado,
         diagnostico: osOriginal.diagnostico,
         solucaoRecomendada: osOriginal.solucaoRecomendada,
+        inData: osOriginal.inData,
+        outData: osOriginal.outData,
         isPaid: novoStatusPagamento,
       );
 

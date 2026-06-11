@@ -30,6 +30,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
   OrderStatus _statusSelecionado = OrderStatus.aberto;
   bool _isExternal = false;
+  DateTime? _inData;
+  DateTime? _outData;
 
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
@@ -55,6 +57,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _tipoSelecionado = os.tipoAtendimento;
       _statusSelecionado = os.status;
       _isExternal = os.isExternal;
+      _inData = os.inData;
+      _outData = os.outData;
 
       _basePriceController.text = os.serviceBasePrice.toString();
       if (os.kmDistance > 0) {
@@ -71,6 +75,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _diagnosticoController.text = os.diagnostico ?? '';
       _solucaoRecomendadaController.text = os.solucaoRecomendada ?? '';
       _statusSelecionado = os.status;
+    } else {
+      _inData = DateTime.now();
+      _outData = null;
     }
   }
 
@@ -270,6 +277,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               label: 'Dados da OS',
               children: [
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _clienteSelecionadoId,
                   decoration: _fieldDecoration('cliente *'),
                   items: viewModelClientes.clients
@@ -294,6 +302,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _funcionarioSelecionadoId,
                   decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
@@ -309,6 +318,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _servicoSelecionadoId,
                   decoration: _fieldDecoration('Serviço'),
                   items: viewModelServicos.services
@@ -561,10 +571,14 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                         ? (double.tryParse(_kmDistanceController.text.trim()) ??
                               0.0)
                         : 0.0;
-
                     final idOrdem = isEditing
                         ? widget.osParaEditar!.id
-                        : DateTime.now().millisecondsSinceEpoch.toString();
+                        : DateTime.now().microsecondsSinceEpoch.toString();
+                    if (isEditing &&
+                        _statusSelecionado == OrderStatus.completo &&
+                        _outData == null) {
+                      _outData = DateTime.now();
+                    }
 
                     final osPronta = OrdemServico(
                       id: idOrdem,
@@ -578,6 +592,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                       serviceBasePrice: basePrice,
                       kmFee: 0.0,
                       totalValue: 0.0,
+                      inData: _inData,
+                      outData: _outData,
                       observations: _observationsController.text.trim().isEmpty
                           ? null
                           : _observationsController.text.trim(),

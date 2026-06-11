@@ -77,6 +77,8 @@ class DatabaseHelper {
       diagnostico TEXT,
       isPaid INTEGER DEFAULT 0, 
       solucaoRecomendada TEXT,
+      inData TEXT,
+      outData TEXT,
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
     )
