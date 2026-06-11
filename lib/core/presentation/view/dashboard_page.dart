@@ -2,6 +2,7 @@ import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,48 +26,46 @@ class _DashboardPageState extends State<DashboardPage> {
   StreamSubscription? _osListener;
 
   @override
-void initState() {
-  super.initState();
-  _iniciarListenerOS();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    context.read<FuncionarioViewModel>().listAllFromFirestore();
-    final isAdmin = widget.funcionario.role == UserRole.admin;
-    context.read<OrdemServicoViewModel>().carregarOrdensPorFuncionario(
-      widget.funcionario.id,
-       isAdmin: isAdmin,
-    );
-  });
+  void initState() {
+    super.initState();
+    _iniciarListenerOS();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FuncionarioViewModel>().listAllFromFirestore();
+      final isAdmin = widget.funcionario.role == UserRole.admin;
+      context.read<OrdemServicoViewModel>().carregarOrdensPorFuncionario(
+        widget.funcionario.id,
+        isAdmin: isAdmin,
+      );
+    });
+  }
 
-}
+  void _iniciarListenerOS() {
+    final funcionarioId = widget.funcionario.id;
+    bool primeiraLeitura = true;
 
-void _iniciarListenerOS() {
-  final funcionarioId = widget.funcionario.id;
-  bool primeiraLeitura = true;
-
-  _osListener = FirebaseFirestore.instance
-      .collection('ordens_servico')
-      .where('employeeId', isEqualTo: funcionarioId)
-      .snapshots()
-      .listen((snapshot) {
-    if (primeiraLeitura) {
-      primeiraLeitura = false;
-      return;
-    }
-    for (final change in snapshot.docChanges) {
-      if (change.type == DocumentChangeType.added) {
-        NotificationService.showLocalNotification(
-          RemoteMessage(
-            notification: RemoteNotification(
-              title: 'Nova Ordem de Serviço',
-              body: 'Você foi alocado em uma nova OS.',
-            ),
-          ),
-        );
-      }
-    }
-  });
-}
-
+    _osListener = FirebaseFirestore.instance
+        .collection('ordens_servico')
+        .where('employeeId', isEqualTo: funcionarioId)
+        .snapshots()
+        .listen((snapshot) {
+          if (primeiraLeitura) {
+            primeiraLeitura = false;
+            return;
+          }
+          for (final change in snapshot.docChanges) {
+            if (change.type == DocumentChangeType.added) {
+              NotificationService.showLocalNotification(
+                RemoteMessage(
+                  notification: RemoteNotification(
+                    title: 'Nova Ordem de Serviço',
+                    body: 'Você foi alocado em uma nova OS.',
+                  ),
+                ),
+              );
+            }
+          }
+        });
+  }
 
   static const _statusConfig = {
     OrderStatus.aberto: _StatusConfig(
@@ -99,12 +98,12 @@ void _iniciarListenerOS() {
     ),
   };
 
-@override
-void dispose() {
-  _osListener?.cancel();
-  _tabsScrollController.dispose();
-  super.dispose();
-}
+  @override
+  void dispose() {
+    _osListener?.cancel();
+    _tabsScrollController.dispose();
+    super.dispose();
+  }
 
   void _animarRolagemAba(int index) {
     if (_tabsScrollController.hasClients) {
@@ -126,7 +125,18 @@ void dispose() {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<OrdemServicoViewModel>();
-    final ordens = viewModel.ordens;
+
+    // filtro para o usuario
+    final isAdmin = widget.funcionario.role == UserRole.admin;
+    final ordensDoUsuario = isAdmin
+        ? viewModel.ordens
+        : viewModel.ordens
+              .where(
+                (os) =>
+                    os.employeeId == widget.funcionario.id ||
+                    os.technicianId == widget.funcionario.id,
+              )
+              .toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('CoolService')),
@@ -134,7 +144,9 @@ void dispose() {
         funcionario: widget.funcionario,
         currentIndex: 0,
       ),
-      body: ordens.isEmpty ? _buildEmptyState() : _buildDashboard(ordens),
+      body: ordensDoUsuario.isEmpty
+          ? _buildEmptyState()
+          : _buildDashboard(ordensDoUsuario),
     );
   }
 
@@ -151,7 +163,7 @@ void dispose() {
           ),
           SizedBox(height: 8),
           Text(
-            'Cadastre uma nova OS para ver as estatísticas.',
+            'As ordens destinadas a você aparecerão aqui.',
             style: TextStyle(color: Colors.grey),
           ),
         ],
@@ -160,7 +172,7 @@ void dispose() {
   }
 
   Widget _buildDashboard(List<OrdemServico> ordens) {
-    final ordensFiltradas = _filtroAtivo == null
+    final ordensFiltradasPeloStatus = _filtroAtivo == null
         ? ordens
         : ordens.where((os) => os.status == _filtroAtivo).toList();
 
@@ -170,7 +182,7 @@ void dispose() {
         _buildIndicadores(ordens),
         _buildFiltroTabs(),
         const Divider(height: 1),
-        Expanded(child: _buildListaOS(ordensFiltradas)),
+        Expanded(child: _buildListaOS(ordensFiltradasPeloStatus)),
       ],
     );
   }
@@ -240,7 +252,6 @@ void dispose() {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-                        // impede o número de quebrar ou vazar se for muito grande
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -352,10 +363,9 @@ void dispose() {
 
   Widget _buildOSItem(OrdemServico os) {
     final cfg = _statusConfig[os.status]!;
-
     String nomeTecnico = 'Sem Técnico';
 
-    if (os.employeeId != null && os.employeeId!.isNotEmpty) {
+    if (os.employeeId.isNotEmpty) {
       try {
         final funcionarioViewModel = context.read<FuncionarioViewModel>();
         final tec = funcionarioViewModel.funcionarios.firstWhere(
@@ -369,82 +379,92 @@ void dispose() {
 
     final iniciaisTecnico = _getIniciais(nomeTecnico);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              iniciaisTecnico,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OrdemServicoFormPage(osParaEditar: os),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'OS-${os.id}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                iniciaisTecnico,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'OS-${os.id}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Cliente: ${os.clientId}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Téc: $nomeTecnico',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Cliente: ${os.clientId}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: cfg.bgColor,
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              cfg.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: cfg.textColor,
+                  Text(
+                    'Téc: $nomeTecnico',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: cfg.bgColor,
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(
+                cfg.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: cfg.textColor,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

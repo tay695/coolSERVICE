@@ -306,9 +306,10 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   initialValue: _funcionarioSelecionadoId,
                   decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
-                  .where((f) => f.isActive)
-                   .map(
-                     (f) => DropdownMenuItem(value: f.id, child: Text(f.name)),
+                      .where((f) => f.isActive)
+                      .map(
+                        (f) =>
+                            DropdownMenuItem(value: f.id, child: Text(f.name)),
                       )
                       .toList(),
                   validator: (value) =>

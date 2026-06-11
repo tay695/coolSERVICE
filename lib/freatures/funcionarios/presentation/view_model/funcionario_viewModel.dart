@@ -18,7 +18,7 @@ class FuncionarioViewModel extends ChangeNotifier {
     final email = '${funcionario.username}@coolservice.app';
     final password = generatePassword(funcionario.cpf);
 
-  final adminUser = _auth.currentUser;
+    final adminUser = _auth.currentUser;
 
     try {
       // Cria user no Firebase Auth
@@ -78,7 +78,6 @@ class FuncionarioViewModel extends ChangeNotifier {
     await listAll();
   }
 
-
   Future<void> updateFuncionario(Funcionario funcionario) async {
     await _repository.save(funcionario);
 
@@ -88,13 +87,13 @@ class FuncionarioViewModel extends ChangeNotifier {
           .collection('funcionarios')
           .doc(funcionario.firebaseUid)
           .update({
-        'name': funcionario.name,
-        'cpf': funcionario.cpf,
-        'especialty': funcionario.especialty,
-        'phone': funcionario.phone,
-        'role': funcionario.role.name,
-        'isActive': funcionario.isActive,
-      });
+            'name': funcionario.name,
+            'cpf': funcionario.cpf,
+            'especialty': funcionario.especialty,
+            'phone': funcionario.phone,
+            'role': funcionario.role.name,
+            'isActive': funcionario.isActive,
+          });
     }
 
     await listAll();
@@ -121,48 +120,46 @@ class FuncionarioViewModel extends ChangeNotifier {
   }
 
   Future<void> listAllFromFirestore() async {
-  try {
-    // carrega local primeiro
-    _funcionarios = await _repository.listAll();
-    notifyListeners();
+    try {
+      // carrega local primeiro
+      _funcionarios = await _repository.listAll();
+      notifyListeners();
 
-    // sincroniza com Firestore
-    final snapshot = await _firestore.collection('funcionarios').get();
-    if (snapshot.docs.isEmpty) return;
+      // sincroniza com Firestore
+      final snapshot = await _firestore.collection('funcionarios').get();
+      if (snapshot.docs.isEmpty) return;
 
-    final funcionariosFirestore = snapshot.docs.map((doc) {
-      final d = doc.data();
-      return Funcionario(
-        id: d['id'] ?? doc.id,
-        name: d['name'] ?? '',
-        cpf: d['cpf'] ?? '',
-        especialty: d['especialty'] ?? '',
-        phone: d['phone'] ?? '',
-        role: UserRole.values.firstWhere(
-          (r) => r.name == d['role'],
-          orElse: () => UserRole.funcionario,
-        ),
-        isActive: d['isActive'] ?? true,
-        username: d['username'] ?? '',
-        passwordHash: d['passwordHash'] ?? '',
-        firebaseUid: doc.id,
-        fcmToken: d['fcmToken'],
-      );
-    }).toList();
+      final funcionariosFirestore = snapshot.docs.map((doc) {
+        final d = doc.data();
+        return Funcionario(
+          id: d['id'] ?? doc.id,
+          name: d['name'] ?? '',
+          cpf: d['cpf'] ?? '',
+          especialty: d['especialty'] ?? '',
+          phone: d['phone'] ?? '',
+          role: UserRole.values.firstWhere(
+            (r) => r.name == d['role'],
+            orElse: () => UserRole.funcionario,
+          ),
+          isActive: d['isActive'] ?? true,
+          username: d['username'] ?? '',
+          passwordHash: d['passwordHash'] ?? '',
+          firebaseUid: doc.id,
+          fcmToken: d['fcmToken'],
+        );
+      }).toList();
 
-    // salva localmente
-    for (final f in funcionariosFirestore) {
-      await _repository.save(f);
+      // salva localmente
+      for (final f in funcionariosFirestore) {
+        await _repository.save(f);
+      }
+
+      _funcionarios = await _repository.listAll();
+      notifyListeners();
+    } catch (e) {
+      print('Erro ao carregar funcionários do Firestore: $e');
     }
-
-    _funcionarios = await _repository.listAll();
-    notifyListeners();
-  } catch (e) {
-    print('Erro ao carregar funcionários do Firestore: $e');
   }
-}
-
-  
 
   Future<void> toggleActive(String id, bool isActive) async {
     await _repository.toggleActive(id, isActive);
@@ -180,9 +177,10 @@ class FuncionarioViewModel extends ChangeNotifier {
     final digits = cpf.replaceAll(RegExp(r'\D'), '');
     return digits.substring(0, 6);
   }
+
   Future<void> saveFcmToken(String firebaseUid, String token) async {
-  await _firestore.collection('funcionarios').doc(firebaseUid).update({
-    'fcmToken': token,
-  });
-}
+    await _firestore.collection('funcionarios').doc(firebaseUid).update({
+      'fcmToken': token,
+    });
+  }
 }

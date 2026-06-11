@@ -219,14 +219,19 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<UserRole>(
                   value: _selectedRole,
-                  decoration: _fieldDecoration('Cargo', icon: Icons.work_outline),
+                  decoration: _fieldDecoration(
+                    'Cargo',
+                    icon: Icons.work_outline,
+                  ),
                   items: [UserRole.admin, UserRole.funcionario]
                       .map(
                         (r) => DropdownMenuItem(
                           value: r,
-                          child: Text(r == UserRole.admin
-                              ? 'Administrador'
-                              : 'Funcionário'),
+                          child: Text(
+                            r == UserRole.admin
+                                ? 'Administrador'
+                                : 'Funcionário',
+                          ),
                         ),
                       )
                       .toList(),
