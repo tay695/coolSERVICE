@@ -306,9 +306,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   initialValue: _funcionarioSelecionadoId,
                   decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
-                      .map(
-                        (f) =>
-                            DropdownMenuItem(value: f.id, child: Text(f.name)),
+                  .where((f) => f.isActive)
+                   .map(
+                     (f) => DropdownMenuItem(value: f.id, child: Text(f.name)),
                       )
                       .toList(),
                   validator: (value) =>
@@ -628,23 +628,34 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                           : _solucaoRecomendadaController.text.trim(),
                     );
 
-                    await context.read<OrdemServicoViewModel>().salvarOrdem(
-                      osPronta,
-                      isPaid: isEditing ? widget.osParaEditar!.isPaid : false,
-                    );
-
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isEditing
-                                ? 'Ordem atualizada com sucesso!'
-                                : 'Ordem de serviço cadastrada!',
-                          ),
-                          backgroundColor: AppColors.primary,
-                        ),
+                    try {
+                      await context.read<OrdemServicoViewModel>().salvarOrdem(
+                        osPronta,
+                        isPaid: isEditing ? widget.osParaEditar!.isPaid : false,
                       );
-                      Navigator.pop(context);
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isEditing
+                                  ? 'Ordem atualizada com sucesso!'
+                                  : 'Ordem de serviço cadastrada!',
+                            ),
+                            backgroundColor: AppColors.primary,
+                          ),
+                        );
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erro ao salvar OS: $e'),
+                            backgroundColor: Colors.red.shade700,
+                          ),
+                        );
+                      }
                     }
                   }
                 },
