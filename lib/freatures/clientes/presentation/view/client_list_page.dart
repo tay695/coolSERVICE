@@ -225,9 +225,8 @@ class _ClientListPageState extends State<ClientListPage> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => ClientProfilePage(
-                                          cliente: c,
-                                          funcionarioLogado: funcionario,
+                                        builder: (_) => ClientFormPage(
+                                          client: c,
                                         ),
                                       ),
                                     ).then(
@@ -262,7 +261,7 @@ class _ClientListPageState extends State<ClientListPage> {
         foregroundColor: AppColors.noiteArtica,
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const ClientFormPage()),
+          MaterialPageRoute(builder: (_) => ClientFormPage()),
         ).then((_) => context.read<ClientViewModel>().listAll()),
         icon: const Icon(Icons.person_add_outlined),
         label: const Text(
