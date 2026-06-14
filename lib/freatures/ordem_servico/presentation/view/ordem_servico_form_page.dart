@@ -239,6 +239,13 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
         isTecnicoAlocado ||
         widget.funcionarioLogado?.role == UserRole.admin;
 
+    debugPrint('=== PERMISSÃO ===');
+    debugPrint('funcionarioLogado.id: ${widget.funcionarioLogado?.id}');
+    debugPrint('os.employeeId: ${widget.osParaEditar?.employeeId}');
+    debugPrint('isTecnicoAlocado: $isTecnicoAlocado');
+    debugPrint('podeEditar: $podeEditar');
+    debugPrint('role: ${widget.funcionarioLogado?.role}');
+
     return Scaffold(
       appBar: AppBar(
         title: Text(

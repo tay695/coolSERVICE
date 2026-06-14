@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:coolservice/core/services/notification_service.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,19 +44,52 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
-      
+
       final repo = SQLiteFuncionarioRepository();
       final todos = await repo.listAll();
 
-      final funcionario = todos.cast<Funcionario?>().firstWhere(
+      Funcionario? funcionario = todos.cast<Funcionario?>().firstWhere(
         (f) => f!.username == username,
         orElse: () => null,
       );
 
+      // Se não achou no SQLite, busca no Firestore e salva localmente
+      if (funcionario == null) {
+        try {
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid != null) {
+            final doc = await FirebaseFirestore.instance
+                .collection('funcionarios')
+                .doc(uid)
+                .get();
+            if (doc.exists) {
+              final d = doc.data()!;
+              funcionario = Funcionario(
+                id: d['id'] ?? uid,
+                name: d['name'] ?? '',
+                cpf: d['cpf'] ?? '',
+                especialty: d['especialty'] ?? '',
+                phone: d['phone'] ?? '',
+                role: UserRole.values.firstWhere(
+                  (r) => r.name == d['role'],
+                  orElse: () => UserRole.funcionario,
+                ),
+                isActive: d['isActive'] ?? true,
+                username: d['username'] ?? username,
+                passwordHash: '',
+                firebaseUid: uid,
+                fcmToken: d['fcmToken'],
+              );
+              await repo.save(funcionario);
+            }
+          }
+        } catch (_) {}
+      }
+
       setState(() => _isLoading = false);
 
       if (funcionario == null) {
-        setState(() => _error = 'Usuário não encontrado localmente.');
+        setState(() => _error = 'Usuário não encontrado.');
         return;
       }
 
@@ -65,20 +99,19 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
       if (funcionario.firebaseUid != null) {
-         final token = await NotificationService.getToken();
-         if (token != null) {
-           await context.read<FuncionarioViewModel>().saveFcmToken(
-             funcionario.firebaseUid!,
-             token,
-           );
-         }
-       }
-     
+        final token = await NotificationService.getToken();
+        if (token != null) {
+          await context.read<FuncionarioViewModel>().saveFcmToken(
+            funcionario.firebaseUid!,
+            token,
+          );
+        }
+      }
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => DashboardPage(funcionario: funcionario),
+          builder: (_) => DashboardPage(funcionario: funcionario!),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -104,9 +137,7 @@ class _LoginPageState extends State<LoginPage> {
     final todos = await repo.listAll();
 
     final funcionario = todos.cast<Funcionario?>().firstWhere(
-      (f) =>
-          f!.username == username &&
-          f.passwordHash == hashSenha(password),
+      (f) => f!.username == username && f.passwordHash == hashSenha(password),
       orElse: () => null,
     );
 
@@ -176,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 40),
-              
+
               TextField(
                 controller: _usernameController,
                 style: const TextStyle(color: AppColors.brancoPuro),
