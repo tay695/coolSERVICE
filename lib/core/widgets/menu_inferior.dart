@@ -60,6 +60,7 @@ class CadastrosHubPage extends StatelessWidget {
                 );
               },
             ),
+          ],
             const SizedBox(height: 12),
             _buildHubCard(
               context,
@@ -74,16 +75,6 @@ class CadastrosHubPage extends StatelessWidget {
                 );
               },
             ),
-          ] else ...[
-            const SizedBox(height: 32),
-            Center(
-              child: Text(
-                'Cadastros restritos estão ocultos para seu nível de acesso.',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
         ],
       ),
       bottomNavigationBar: MenuInferior(
