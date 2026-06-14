@@ -88,7 +88,10 @@ class _OrdemServicoListPageState extends State<OrdemServicoListPage> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              OrdemServicoFormPage(osParaEditar: os),
+                              OrdemServicoFormPage(
+                                osParaEditar: os,
+                                funcionarioLogado: widget.funcionario,
+                                ),
                         ),
                       );
                     },

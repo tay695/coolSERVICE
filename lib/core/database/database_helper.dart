@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
       onOpen: _ensureDB,
@@ -79,6 +79,7 @@ class DatabaseHelper {
       solucaoRecomendada TEXT,
       inData TEXT,
       outData TEXT,
+      dataAgendada TEXT,
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
     )
@@ -91,6 +92,11 @@ class DatabaseHelper {
     if (oldVersion < 2) {
       await _createServicesTable(db);
     }
+    if (oldVersion < 4) {
+       try {
+        await db.execute('ALTER TABLE service_orders ADD COLUMN dataAgendada TEXT');
+        } catch (_) {}
+        }
   }
 
   Future<void> _ensureDB(Database db) async {

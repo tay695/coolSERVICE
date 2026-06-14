@@ -24,6 +24,7 @@ class OrdemServicoModel extends OrdemServico {
     super.solucaoRecomendada,
     super.inData,
     super.outData,
+    super.dataAgendada,
     required super.isPaid,
   });
 
@@ -52,6 +53,7 @@ class OrdemServicoModel extends OrdemServico {
       'isPaid': isPaid ? 1 : 0,
       'inData': inData?.toIso8601String(),
       'outData': outData?.toIso8601String(),
+      'dataAgendada': dataAgendada?.toIso8601String(),
     };
   }
 
@@ -84,6 +86,10 @@ class OrdemServicoModel extends OrdemServico {
       outData: map['outData'] != null
           ? DateTime.tryParse(map['outData'])
           : null,
+      dataAgendada: map['dataAgendada'] != null
+          ? DateTime.tryParse(map['dataAgendada'])
+          : null,
+          
     );
   }
 }
