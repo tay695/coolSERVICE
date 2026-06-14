@@ -221,6 +221,7 @@ class OrdemServicoViewModel extends ChangeNotifier {
               'kmFee': osCompletaComValores.kmFee,
               'totalValue': osCompletaComValores.totalValue,
               'observations': osCompletaComValores.observations,
+              'isPaid': osCompletaComValores.isPaid,
               'inData': osCompletaComValores.inData,
               'outData': osCompletaComValores.outData,
               'criadoEm': FieldValue.serverTimestamp(),
@@ -293,6 +294,14 @@ class OrdemServicoViewModel extends ChangeNotifier {
       );
 
       await repository.save(osAtualizada);
+      try {
+        await FirebaseFirestore.instance
+            .collection('ordens_servico')
+            .doc(osAtualizada.id)
+            .update({'isPaid': novoStatusPagamento});
+      } catch (e) {
+        print('Erro ao atualizar pagamento no Firestore: $e');
+      }
 
       _ordens.removeWhere((os) => os.id == osAtualizada.id);
       _ordens.add(osAtualizada);

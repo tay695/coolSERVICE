@@ -645,77 +645,81 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
             const SizedBox(height: 12),
             if (isEditing && isTecnicoAlocado) ...[
               const SizedBox(height: 8),
-              SizedBox(
-                height: 52,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: widget.osParaEditar!.isPaid
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: widget.osParaEditar!.isPaid
+                      ? Colors.green
+                      : Colors.red,
+                  side: BorderSide(
+                    color: widget.osParaEditar!.isPaid
                         ? Colors.green
-                        : Colors.orange,
-                    foregroundColor: AppColors.brancoPuro,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                        : Colors.red,
+                    width: 1.5,
                   ),
-                  icon: Icon(
-                    widget.osParaEditar!.isPaid
-                        ? Icons.check_circle
-                        : Icons.attach_money,
-                    size: 18,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  label: Text(
-                    widget.osParaEditar!.isPaid
-                        ? 'Pagamento já confirmado'
-                        : 'Confirmar recebimento de pagamento',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-                  onPressed: widget.osParaEditar!.isPaid
-                      ? null // já pago, desabilita
-                      : () async {
-                          final confirmar = await showDialog<bool>(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text('Confirmar pagamento'),
-                              content: const Text(
-                                'Confirma que o pagamento desta OS foi recebido?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.pop(context, false),
-                                  child: const Text('Cancelar'),
-                                ),
-                                FilledButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Confirmar'),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirmar == true && context.mounted) {
-                            await context
-                                .read<OrdemServicoViewModel>()
-                                .alternarStatusPagamento(
-                                  widget.osParaEditar!,
-                                  true,
-                                );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Pagamento confirmado!'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.pop(context);
-                            }
-                          }
-                        },
                 ),
+                icon: Icon(
+                  widget.osParaEditar!.isPaid
+                      ? Icons.check_circle_outline
+                      : Icons.pending_outlined,
+                  size: 16,
+                ),
+                label: Text(
+                  widget.osParaEditar!.isPaid
+                      ? 'Pagamento confirmado'
+                      : 'Pagamento pendente — confirmar',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                onPressed: widget.osParaEditar!.isPaid
+                    ? null
+                    : () async {
+                        final confirmar = await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Confirmar pagamento'),
+                            content: const Text(
+                              'Confirma que o pagamento desta OS foi recebido?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancelar'),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Confirmar'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmar == true && context.mounted) {
+                          await context
+                              .read<OrdemServicoViewModel>()
+                              .alternarStatusPagamento(
+                                widget.osParaEditar!,
+                                true,
+                              );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Pagamento confirmado!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          }
+                        }
+                      },
               ),
-              const SizedBox(height: 8),
             ],
             TextButton(
               onPressed: () => Navigator.pop(context),
