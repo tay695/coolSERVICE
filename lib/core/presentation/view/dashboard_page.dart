@@ -415,7 +415,10 @@ class _DashboardPageState extends State<DashboardPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrdemServicoFormPage(osParaEditar: os),
+            builder: (_) => OrdemServicoFormPage(
+              osParaEditar: os,
+              funcionarioLogado: widget.funcionario,
+            ),
           ),
         );
       },
