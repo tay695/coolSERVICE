@@ -16,9 +16,8 @@ class OrdemServico {
   final double totalValue;
   final String? observations;
   final bool isPaid;
-  final DateTime? inData;
-  final DateTime? outData;
-  final DateTime? dataAgendada;
+  final DateTime? dataCriacao;
+  final DateTime? dataConclusao;
   //campos de Manutenção
   final String? equipamento;
   final String? tipoDefeito;
@@ -53,9 +52,8 @@ class OrdemServico {
     this.equipamentoAvaliado,
     this.diagnostico,
     this.solucaoRecomendada,
-    this.inData,
-    this.outData,
-    this.dataAgendada,
+    this.dataConclusao,
+    this.dataCriacao,
   });
 
   double calculateTotal() {

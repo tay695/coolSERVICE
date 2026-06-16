@@ -77,9 +77,8 @@ class DatabaseHelper {
       diagnostico TEXT,
       isPaid INTEGER DEFAULT 0, 
       solucaoRecomendada TEXT,
-      inData TEXT,
-      outData TEXT,
-      dataAgendada TEXT,
+      dataCriacao TEXT,
+      dataConclusao TEXT
       FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE CASCADE,
       FOREIGN KEY (employeeId) REFERENCES employees (id) ON DELETE SET NULL
     )
@@ -93,10 +92,12 @@ class DatabaseHelper {
       await _createServicesTable(db);
     }
     if (oldVersion < 4) {
-       try {
-        await db.execute('ALTER TABLE service_orders ADD COLUMN dataAgendada TEXT');
-        } catch (_) {}
-        }
+      try {
+        await db.execute(
+          'ALTER TABLE service_orders ADD COLUMN dataAgendada TEXT',
+        );
+      } catch (_) {}
+    }
   }
 
   Future<void> _ensureDB(Database db) async {

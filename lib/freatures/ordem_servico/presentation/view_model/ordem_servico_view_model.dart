@@ -9,6 +9,7 @@ import 'package:coolservice/core/services/notification_service.dart';
 
 class OrdemServicoViewModel extends ChangeNotifier {
   final IOrdemServicoRepository repository;
+  final int prazoPagamentoDias = 1;
   final PreferencesService preferencesService;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -17,11 +18,28 @@ class OrdemServicoViewModel extends ChangeNotifier {
 
   double _taxaKm = 2.50;
   double get taxaKm => _taxaKm;
-
   OrdemServicoViewModel({
     required this.repository,
     required this.preferencesService,
   });
+  List<OrdemServico> get ordensComPagamentoAtrasado {
+    final agora = DateTime.now();
+    print('Total de ordens: ${_ordens.length}');
+    for (final os in _ordens) {
+      print(
+        'OS ${os.id} | status: ${os.status} | isPaid: ${os.isPaid} | outData: ${os.dataConclusao}',
+      );
+    }
+    return _ordens.where((os) {
+      if (os.isPaid) return false;
+      if (os.status != OrderStatus.pedentes) return false;
+      if (os.dataCriacao == null) return false;
+      final dataLimite = os.dataConclusao!.add(
+        Duration(days: prazoPagamentoDias),
+      );
+      return agora.isAfter(dataLimite);
+    }).toList();
+  }
 
   Future<void> updateTaxaKm(double novaTaxa) async {
     _taxaKm = novaTaxa;
@@ -45,7 +63,7 @@ class OrdemServicoViewModel extends ChangeNotifier {
           .collection('ordens_servico')
           .orderBy('criadoEm', descending: true)
           .get();
-      print('Firestore retornou: ${snapshot.docs.length} ordens'); // ← AQUI
+      print('Firestore retornou: ${snapshot.docs.length} ordens');
 
       if (snapshot.docs.isEmpty) return;
 
@@ -70,6 +88,12 @@ class OrdemServicoViewModel extends ChangeNotifier {
           totalValue: (d['totalValue'] ?? 0).toDouble(),
           observations: d['observations'],
           isPaid: d['isPaid'] ?? false,
+          dataCriacao: d['dataCriacao'] != null
+              ? (d['dataCriacao'] as Timestamp).toDate()
+              : null,
+          dataConclusao: d['dataConclusao'] != null
+              ? (d['dataConclusao'] as Timestamp).toDate()
+              : null,
         );
       }).toList();
       print('OS carregada: ${ordensFirestore.length}');
@@ -154,6 +178,12 @@ class OrdemServicoViewModel extends ChangeNotifier {
           totalValue: (d['totalValue'] ?? 0).toDouble(),
           observations: d['observations'],
           isPaid: d['isPaid'] ?? false,
+          dataCriacao: d['dataCriacao'] != null
+              ? (d['dataCriacao'] as Timestamp).toDate()
+              : null,
+          dataConclusao: d['dataConclusao'] != null
+              ? (d['dataConclusao'] as Timestamp).toDate()
+              : null,
         );
       }).toList();
 
@@ -197,8 +227,8 @@ class OrdemServicoViewModel extends ChangeNotifier {
         equipamentoAvaliado: novaOS.equipamentoAvaliado,
         diagnostico: novaOS.diagnostico,
         solucaoRecomendada: novaOS.solucaoRecomendada,
-        inData: novaOS.inData,
-        outData: novaOS.outData,
+        dataCriacao: novaOS.dataCriacao,
+        dataConclusao: novaOS.dataConclusao,
         isPaid: novaOS.isPaid,
       );
 
@@ -221,10 +251,9 @@ class OrdemServicoViewModel extends ChangeNotifier {
               'kmFee': osCompletaComValores.kmFee,
               'totalValue': osCompletaComValores.totalValue,
               'observations': osCompletaComValores.observations,
+              'dataCriacao': osCompletaComValores.dataCriacao,
+              'dataConclusao': osCompletaComValores.dataConclusao,
               'isPaid': osCompletaComValores.isPaid,
-              'inData': osCompletaComValores.inData,
-              'outData': osCompletaComValores.outData,
-              'criadoEm': FieldValue.serverTimestamp(),
             });
       } catch (e) {
         print('Erro ao salvar OS no Firestore: $e');
@@ -288,8 +317,8 @@ class OrdemServicoViewModel extends ChangeNotifier {
         equipamentoAvaliado: osOriginal.equipamentoAvaliado,
         diagnostico: osOriginal.diagnostico,
         solucaoRecomendada: osOriginal.solucaoRecomendada,
-        inData: osOriginal.inData,
-        outData: osOriginal.outData,
+        dataCriacao: osOriginal.dataCriacao,
+        dataConclusao: osOriginal.dataConclusao,
         isPaid: novoStatusPagamento,
       );
 
@@ -337,5 +366,21 @@ class OrdemServicoViewModel extends ChangeNotifier {
   ) async {
     final useCase = CalcKmFeeUseCase(taxaPorKm: _taxaKm);
     return await useCase.executar(enderecoCliente, city, state);
+  }
+
+  Future<void> excluirOrdemServico(String idOS) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('ordens_servico')
+          .doc(idOS)
+          .delete();
+
+      _ordens.removeWhere((os) => os.id == idOS);
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao excluir OS: $e");
+      rethrow;
+    }
   }
 }

@@ -23,7 +23,9 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  bool get isAdmin => widget.funcionario.role == UserRole.admin;
   OrderStatus? _filtroAtivo;
+
   final ScrollController _tabsScrollController = ScrollController();
   StreamSubscription? _osListener;
 
@@ -33,7 +35,6 @@ class _DashboardPageState extends State<DashboardPage> {
     _iniciarListenerOS();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<FuncionarioViewModel>().listAllFromFirestore();
-      final isAdmin = widget.funcionario.role == UserRole.admin;
       context.read<OrdemServicoViewModel>().carregarOrdensPorFuncionario(
         widget.funcionario.id,
         isAdmin: isAdmin,
@@ -45,28 +46,32 @@ class _DashboardPageState extends State<DashboardPage> {
     final funcionarioId = widget.funcionario.id;
     bool primeiraLeitura = true;
 
-    _osListener = FirebaseFirestore.instance
-        .collection('ordens_servico')
-        .where('employeeId', isEqualTo: funcionarioId)
-        .snapshots()
-        .listen((snapshot) {
-          if (primeiraLeitura) {
-            primeiraLeitura = false;
-            return;
-          }
-          for (final change in snapshot.docChanges) {
-            if (change.type == DocumentChangeType.added) {
-              NotificationService.showLocalNotification(
-                RemoteMessage(
-                  notification: RemoteNotification(
-                    title: 'Nova Ordem de Serviço',
-                    body: 'Você foi alocado em uma nova OS.',
-                  ),
-                ),
-              );
-            }
-          }
-        });
+    // Se for Admin, escuta todas as mudanças; se for técnico, escuta só as dele
+    Query query = FirebaseFirestore.instance.collection('ordens_servico');
+    if (!isAdmin) {
+      query = query.where('employeeId', isEqualTo: funcionarioId);
+    }
+
+    _osListener = query.snapshots().listen((snapshot) {
+      if (primeiraLeitura) {
+        primeiraLeitura = false;
+        return;
+      }
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          NotificationService.showLocalNotification(
+            RemoteMessage(
+              notification: RemoteNotification(
+                title: 'Nova Ordem de Serviço',
+                body: isAdmin
+                    ? 'Uma nova OS foi registrada no sistema.'
+                    : 'Você foi alocado em uma nova OS.',
+              ),
+            ),
+          );
+        }
+      }
+    });
   }
 
   static const _statusConfig = {
@@ -127,9 +132,9 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<OrdemServicoViewModel>();
-
-    // filtro para o usuario
-    final isAdmin = widget.funcionario.role == UserRole.admin;
+    final funcionarioViewModel = context.watch<FuncionarioViewModel>();
+    final ordensAtrasadas = viewModel.ordensComPagamentoAtrasado;
+    final _ = context.read<OrdemServicoViewModel>();
     final ordensDoUsuario = isAdmin
         ? viewModel.ordens
         : viewModel.ordens
@@ -175,9 +180,69 @@ class _DashboardPageState extends State<DashboardPage> {
         funcionario: widget.funcionario,
         currentIndex: 0,
       ),
-      body: ordensDoUsuario.isEmpty
-          ? _buildEmptyState()
-          : _buildDashboard(ordensDoUsuario),
+      body: Column(
+        children: [
+          if (isAdmin && ordensAtrasadas.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.5),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'ALERTA DE PAGAMENTOS ATRASADOS',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Existem ${ordensAtrasadas.length} ordem(ns) de serviço aguardando pagamento além do prazo tolerado.',
+                    style: TextStyle(color: Colors.red[800], fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 40),
+                    ),
+                    icon: const Icon(Icons.visibility, size: 16),
+                    label: const Text('Ver clientes inadiplentes'),
+                    onPressed: () {
+                      _mostrarListaDeAtrasados(context, ordensAtrasadas);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: ordensDoUsuario.isEmpty
+                ? _buildEmptyState()
+                : _buildDashboard(ordensDoUsuario, funcionarioViewModel),
+          ),
+        ],
+      ),
     );
   }
 
@@ -205,7 +270,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildDashboard(List<OrdemServico> ordens) {
+  Widget _buildDashboard(List<OrdemServico> ordens, FuncionarioViewModel fVM) {
+    final osViewModel = context.read<OrdemServicoViewModel>();
     final ordensFiltradasPeloStatus = _filtroAtivo == null
         ? ordens
         : ordens.where((os) => os.status == _filtroAtivo).toList();
@@ -213,15 +279,18 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildIndicadores(ordens),
+        _buildIndicadores(ordens, osViewModel),
         _buildFiltroTabs(),
         const Divider(height: 1),
-        Expanded(child: _buildListaOS(ordensFiltradasPeloStatus)),
+        Expanded(child: _buildListaOS(ordensFiltradasPeloStatus, fVM)),
       ],
     );
   }
 
-  Widget _buildIndicadores(List<OrdemServico> ordens) {
+  Widget _buildIndicadores(
+    List<OrdemServico> ordens,
+    OrdemServicoViewModel vModel,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: GridView.count(
@@ -238,16 +307,25 @@ class _DashboardPageState extends State<DashboardPage> {
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _filtroAtivo = isAtivo ? null : entry.key;
-              });
-              final mapaIndexes = {
-                OrderStatus.aberto: 1,
-                OrderStatus.encaminhada: 2,
-                OrderStatus.pedentes: 3,
-                OrderStatus.completo: 4,
-              };
-              _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
+              if (entry.key == OrderStatus.pedentes &&
+                  isAdmin &&
+                  vModel.ordensComPagamentoAtrasado.isNotEmpty) {
+                _mostrarListaDeAtrasados(
+                  context,
+                  vModel.ordensComPagamentoAtrasado,
+                );
+              } else {
+                setState(() {
+                  _filtroAtivo = isAtivo ? null : entry.key;
+                });
+                final mapaIndexes = {
+                  OrderStatus.aberto: 1,
+                  OrderStatus.encaminhada: 2,
+                  OrderStatus.pedentes: 3,
+                  OrderStatus.completo: 4,
+                };
+                _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
+              }
             },
             child: Semantics(
     label: '${cfg.label}, $count ordens. ${isAtivo ? 'Filtro ativo' : 'Toque para filtrar'}',
@@ -337,8 +415,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
           return GestureDetector(
             onTap: () {
-              setState(() => _filtroAtivo = status);
-              _animarRolagemAba(i);
+              setState(() {
+                _filtroAtivo = isAtivo ? null : status;
+              });
+              _animarRolagemAba(isAtivo ? 0 : i);
             },
             child: Semantics(
               label: '$label${isAtivo ? ', selecionado' : ''}',
@@ -379,7 +459,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildListaOS(List<OrdemServico> ordens) {
+  Widget _buildListaOS(List<OrdemServico> ordens, FuncionarioViewModel fVM) {
     if (ordens.isEmpty) {
       return const Center(
         child: Column(
@@ -400,20 +480,17 @@ class _DashboardPageState extends State<DashboardPage> {
       padding: const EdgeInsets.all(16),
       itemCount: ordens.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) => _buildOSItem(ordens[i]),
+      itemBuilder: (context, i) => _buildOSItem(ordens[i], fVM),
     );
   }
 
-  Widget _buildOSItem(OrdemServico os) {
+  Widget _buildOSItem(OrdemServico os, FuncionarioViewModel fVM) {
     final cfg = _statusConfig[os.status]!;
     String nomeTecnico = 'Sem Técnico';
 
     if (os.employeeId.isNotEmpty) {
       try {
-        final funcionarioViewModel = context.read<FuncionarioViewModel>();
-        final tec = funcionarioViewModel.funcionarios.firstWhere(
-          (f) => f.id == os.employeeId,
-        );
+        final tec = fVM.funcionarios.firstWhere((f) => f.id == os.employeeId);
         nomeTecnico = tec.name;
       } catch (_) {
         nomeTecnico = 'Técnico Não Encontrado';
@@ -525,6 +602,63 @@ class _DashboardPageState extends State<DashboardPage> {
     if (partes.isEmpty) return '?';
     if (partes.length == 1) return partes[0][0].toUpperCase();
     return (partes[0][0] + partes[1][0]).toUpperCase();
+  }
+
+  void _mostrarListaDeAtrasados(
+    BuildContext context,
+    List<OrdemServico> ordensAtrasadas,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ordens em Atraso',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: ordensAtrasadas.length,
+                  itemBuilder: (context, index) {
+                    final os = ordensAtrasadas[index];
+                    return ListTile(
+                      leading: const Icon(Icons.money_off, color: Colors.red),
+                      title: Text('OS #${os.id}'),
+                      subtitle: Text(
+                        'Valor a receber: R\$ ${os.totalValue.toStringAsFixed(2)}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrdemServicoFormPage(
+                              osParaEditar: os,
+                              funcionarioLogado: widget.funcionario,
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

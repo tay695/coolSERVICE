@@ -37,9 +37,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
   OrderStatus _statusSelecionado = OrderStatus.aberto;
   bool _isExternal = false;
-  DateTime? _inData;
-  DateTime? _outData;
-  DateTime? _dataAgendada;
+  DateTime? _dataCriacao;
+  DateTime? _dataConclusao;
 
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
@@ -64,10 +63,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _funcionarioSelecionadoId = os.employeeId;
       _tipoSelecionado = os.tipoAtendimento;
       _statusSelecionado = os.status;
+      _dataCriacao = os.dataCriacao;
+      _dataConclusao = os.dataConclusao;
       _isExternal = os.isExternal;
-      _inData = os.inData;
-      _outData = os.outData;
-      _dataAgendada = os.dataAgendada;
 
       _basePriceController.text = os.serviceBasePrice.toString();
       if (os.kmDistance > 0) {
@@ -85,8 +83,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _solucaoRecomendadaController.text = os.solucaoRecomendada ?? '';
       _statusSelecionado = os.status;
     } else {
-      _inData = DateTime.now();
-      _outData = null;
+      _dataCriacao = DateTime.now();
+      _dataConclusao = null;
     }
   }
 
@@ -249,9 +247,19 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço',
-        ),
+        title: Text(widget.osParaEditar != null ? 'Editar OS' : 'Nova OS'),
+        actions: [
+          // Só mostra a lixeira se for uma edição e se quem está logado for Admin
+          if (widget.osParaEditar != null &&
+              widget.funcionarioLogado.role == UserRole.admin)
+            IconButton(
+              icon: const Icon(
+                Icons.delete_forever_rounded,
+                color: Colors.redAccent,
+              ),
+              onPressed: () => _confirmarExclusao(context),
+            ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -407,56 +415,6 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                         : null,
                   ),
                 ],
-                const SizedBox(height: 12),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _dataAgendada ?? DateTime.now(),
-                      firstDate: DateTime.now().subtract(
-                        const Duration(days: 1),
-                      ),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setState(() => _dataAgendada = picked);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 16,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.noiteArtica
-                          : AppColors.brancoPuro,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.azulGelo, width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today,
-                          size: 18,
-                          color: AppColors.azulCeu,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _dataAgendada != null
-                              ? 'Agendado para: ${_dataAgendada!.day.toString().padLeft(2, '0')}/${_dataAgendada!.month.toString().padLeft(2, '0')}/${_dataAgendada!.year}'
-                              : 'Selecionar data do atendimento',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: _dataAgendada != null
-                                ? AppColors.azulProfundo
-                                : AppColors.cinzaNeve,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
 
@@ -674,7 +632,7 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 label: Text(
                   widget.osParaEditar!.isPaid
                       ? 'Pagamento Confirmado'
-                      : 'Ir para Perfil do Cliente — Baixar Débito',
+                      : 'Dar baixa em Débito',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -743,8 +701,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                                     .toString();
                           if (isEditing &&
                               _statusSelecionado == OrderStatus.completo &&
-                              _outData == null) {
-                            _outData = DateTime.now();
+                              _dataConclusao == null) {
+                            _dataConclusao = DateTime.now();
                           }
 
                           final osPronta = OrdemServico(
@@ -759,9 +717,14 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                             serviceBasePrice: basePrice,
                             kmFee: 0.0,
                             totalValue: 0.0,
-                            inData: _inData,
-                            outData: _outData,
-                            dataAgendada: _dataAgendada,
+                            dataCriacao: isEditing
+                                ? widget.osParaEditar!.dataCriacao
+                                : DateTime.now(),
+                            dataConclusao:
+                                _statusSelecionado == OrderStatus.completo
+                                ? (widget.osParaEditar?.dataConclusao ??
+                                      DateTime.now())
+                                : null,
                             observations:
                                 _observationsController.text.trim().isEmpty
                                 ? null
@@ -845,6 +808,82 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _confirmarExclusao(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Excluir OS'),
+            ],
+          ),
+          content: Text(
+            'Tem certeza que deseja apagar permanentemente a OS-${widget.osParaEditar!.id}? Esta ação não pode ser desfeita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext), // Fecha o modal
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(dialogContext); // Fecha o modal primeiro
+
+                // Exibe um loading simples na tela
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+
+                try {
+                  // Chama o ViewModel para apagar do banco
+                  await context
+                      .read<OrdemServicoViewModel>()
+                      .excluirOrdemServico(widget.osParaEditar!.id);
+
+                  if (context.mounted) {
+                    Navigator.pop(context); // Remove o loading
+                    Navigator.pop(context); // Volta para o Dashboard
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ordem de serviço excluída com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context); // Remove o loading
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao excluir: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text(
+                'Excluir',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
