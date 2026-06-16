@@ -142,8 +142,21 @@ class OrdemServicoViewModel extends ChangeNotifier {
     bool isAdmin = false,
   }) async {
     try {
+      final listaDoBanco = await repository.listAll();
+      final ordensFiltradas = isAdmin
+          ? listaDoBanco
+          : listaDoBanco
+                .where(
+                  (os) =>
+                      os.employeeId == funcionarioId ||
+                      os.technicianId == funcionarioId,
+                )
+                .toList();
+
       _ordens.clear();
+      _ordens.addAll(ordensFiltradas);
       notifyListeners();
+
       await _ensureFirebaseAuth();
 
       Query query = FirebaseFirestore.instance
@@ -155,16 +168,17 @@ class OrdemServicoViewModel extends ChangeNotifier {
       }
 
       final snapshot = await query.get();
-      print('funcionarioId buscado: $funcionarioId');
-      print('docs encontrados: ${snapshot.docs.length}');
+      print('docs encontrados no Firestore: ${snapshot.docs.length}');
+
+      // 3. Só substitui se Firestore trouxer dados
       if (snapshot.docs.isEmpty) return;
 
       final ordensFirestore = snapshot.docs.map((doc) {
         final d = doc.data() as Map<String, dynamic>;
         return OrdemServico(
-          id: d['id'],
-          clientId: d['clientId'],
-          employeeId: d['employeeId'],
+          id: d['id'] ?? doc.id,
+          clientId: d['clientId'] ?? '',
+          employeeId: d['employeeId'] ?? '',
           technicianId: d['technicianId'],
           status: _parseStatus(d['status']),
           tipoAtendimento: TipoAtendimento.values.firstWhere(

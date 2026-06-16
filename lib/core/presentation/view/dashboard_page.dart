@@ -43,13 +43,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _iniciarListenerOS() {
-    final funcionarioId = widget.funcionario.id;
     bool primeiraLeitura = true;
 
-    // Se for Admin, escuta todas as mudanças; se for técnico, escuta só as dele
     Query query = FirebaseFirestore.instance.collection('ordens_servico');
     if (!isAdmin) {
-      query = query.where('employeeId', isEqualTo: funcionarioId);
+      query = query.where('employeeId', isEqualTo: widget.funcionario.id);
     }
 
     _osListener = query.snapshots().listen((snapshot) {
@@ -116,11 +114,7 @@ class _DashboardPageState extends State<DashboardPage> {
     if (_tabsScrollController.hasClients) {
       double posicaoDestino = index * 95.0;
       final maxScroll = _tabsScrollController.position.maxScrollExtent;
-
-      if (posicaoDestino > maxScroll) {
-        posicaoDestino = maxScroll;
-      }
-
+      if (posicaoDestino > maxScroll) posicaoDestino = maxScroll;
       _tabsScrollController.animateTo(
         posicaoDestino,
         duration: const Duration(milliseconds: 300),
@@ -134,7 +128,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final viewModel = context.watch<OrdemServicoViewModel>();
     final funcionarioViewModel = context.watch<FuncionarioViewModel>();
     final ordensAtrasadas = viewModel.ordensComPagamentoAtrasado;
-    final _ = context.read<OrdemServicoViewModel>();
+
     final ordensDoUsuario = isAdmin
         ? viewModel.ordens
         : viewModel.ordens
@@ -197,15 +191,15 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.warning_amber_rounded,
                         color: Colors.red,
                         size: 24,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
+                      SizedBox(width: 8),
+                      Text(
                         'ALERTA DE PAGAMENTOS ATRASADOS',
                         style: TextStyle(
                           color: Colors.red,
@@ -228,10 +222,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       minimumSize: const Size(double.infinity, 40),
                     ),
                     icon: const Icon(Icons.visibility, size: 16),
-                    label: const Text('Ver clientes inadiplentes'),
-                    onPressed: () {
-                      _mostrarListaDeAtrasados(context, ordensAtrasadas);
-                    },
+                    label: const Text('Ver clientes inadimplentes'),
+                    onPressed: () =>
+                        _mostrarListaDeAtrasados(context, ordensAtrasadas),
                   ),
                 ],
               ),
@@ -247,26 +240,27 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEmptyState() {
-    return  Center(
-       child: Semantics(
-        label: 'Nenhuma ordem de serviço registrada. As ordens destinadas a você aparecerão aqui.',
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Nenhuma Ordem de Serviço registrada.',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'As ordens destinadas a você aparecerão aqui.',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ],
+    return Center(
+      child: Semantics(
+        label:
+            'Nenhuma ordem de serviço registrada. As ordens destinadas a você aparecerão aqui.',
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Nenhuma Ordem de Serviço registrada.',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'As ordens destinadas a você aparecerão aqui.',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
       ),
-       ),
     );
   }
 
@@ -328,63 +322,66 @@ class _DashboardPageState extends State<DashboardPage> {
               }
             },
             child: Semantics(
-    label: '${cfg.label}, $count ordens. ${isAtivo ? 'Filtro ativo' : 'Toque para filtrar'}',
-    button: true,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              decoration: BoxDecoration(
-                color: cfg.bgColor,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isAtivo ? cfg.color : cfg.color.withOpacity(0.25),
-                  width: isAtivo ? 1.5 : 0.5,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: cfg.color,
-                    ),
+              label:
+                  '${cfg.label}, $count ordens. ${isAtivo ? 'Filtro ativo' : 'Toque para filtrar'}',
+              button: true,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  color: cfg.bgColor,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isAtivo ? cfg.color : cfg.color.withOpacity(0.25),
+                    width: isAtivo ? 1.5 : 0.5,
                   ),
-              
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          cfg.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: cfg.textColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '$count',
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: cfg.color,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            cfg.label,
                             style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                               color: cfg.textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '$count',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: cfg.textColor,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           );
         }).toList(),
@@ -415,43 +412,44 @@ class _DashboardPageState extends State<DashboardPage> {
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _filtroAtivo = isAtivo ? null : status;
-              });
+              setState(() => _filtroAtivo = isAtivo ? null : status);
               _animarRolagemAba(isAtivo ? 0 : i);
             },
             child: Semantics(
               label: '$label${isAtivo ? ', selecionado' : ''}',
               button: true,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isAtivo
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
                   color: isAtivo
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.withOpacity(0.35),
-                  width: 0.5,
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: isAtivo
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.withOpacity(0.35),
+                    width: 0.5,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isAtivo
+                        ? Colors.white
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isAtivo
-                      ? Colors.white
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-            ),
             ),
           );
         },
@@ -500,101 +498,106 @@ class _DashboardPageState extends State<DashboardPage> {
     final iniciaisTecnico = _getIniciais(nomeTecnico);
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OrdemServicoFormPage(
-              osParaEditar: os,
-              funcionarioLogado: widget.funcionario,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrdemServicoFormPage(
+            osParaEditar: os,
+            funcionarioLogado: widget.funcionario,
+          ),
+        ),
+      ),
+      child: Semantics(
+        label:
+            'Ordem de serviço ${os.id}, técnico $nomeTecnico, status ${cfg.label}. Toque para abrir.',
+        button: true,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.15),
+              width: 0.5,
             ),
           ),
-        );
-      },
-      child: Semantics(
-        label: 'Ordem de serviço ${os.id}, técnico $nomeTecnico, status ${cfg.label}. Toque para abrir.',
-        button: true,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  iniciaisTecnico,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                iniciaisTecnico,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'OS-${os.id}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'OS-${os.id}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Cliente: ${os.clientId}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    'Téc: $nomeTecnico',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cliente: ${os.clientId}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: cfg.bgColor,
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: Text(
-                cfg.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: cfg.textColor,
+                    Text(
+                      'Téc: $nomeTecnico',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cfg.bgColor,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  cfg.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: cfg.textColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
-    
   }
 
   String _getIniciais(String nome) {
@@ -625,34 +628,33 @@ class _DashboardPageState extends State<DashboardPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: ordensAtrasadas.length,
-                  itemBuilder: (context, index) {
-                    final os = ordensAtrasadas[index];
-                    return ListTile(
-                      leading: const Icon(Icons.money_off, color: Colors.red),
-                      title: Text('OS #${os.id}'),
-                      subtitle: Text(
-                        'Valor a receber: R\$ ${os.totalValue.toStringAsFixed(2)}',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => OrdemServicoFormPage(
-                              osParaEditar: os,
-                              funcionarioLogado: widget.funcionario,
-                            ),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ordensAtrasadas.length,
+                itemBuilder: (context, index) {
+                  final os = ordensAtrasadas[index];
+                  return ListTile(
+                    leading: const Icon(Icons.money_off, color: Colors.red),
+                    title: Text('OS #${os.id}'),
+                    subtitle: Text(
+                      'Valor a receber: R\$ ${os.totalValue.toStringAsFixed(2)}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrdemServicoFormPage(
+                            osParaEditar: os,
+                            funcionarioLogado: widget.funcionario,
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),

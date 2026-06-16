@@ -98,14 +98,31 @@ class DatabaseHelper {
         );
       } catch (_) {}
     }
+    if (oldVersion < 5) {
+      try {
+        await db.execute(
+          'ALTER TABLE service_orders ADD COLUMN dataCriacao TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE service_orders ADD COLUMN dataConclusao TEXT',
+        );
+        await db.execute(
+          'UPDATE service_orders SET dataCriacao = inData WHERE inData IS NOT NULL',
+        );
+        await db.execute(
+          'UPDATE service_orders SET dataConclusao = outData WHERE outData IS NOT NULL',
+        );
+      } catch (_) {}
+    }
   }
+}
 
-  Future<void> _ensureDB(Database db) async {
-    await _createServicesTable(db);
-  }
+Future<void> _ensureDB(Database db) async {
+  await _createServicesTable(db);
+}
 
-  Future<void> _createServicesTable(Database db) async {
-    await db.execute('''
+Future<void> _createServicesTable(Database db) async {
+  await db.execute('''
       CREATE TABLE IF NOT EXISTS services (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -115,5 +132,4 @@ class DatabaseHelper {
         isExternal INTEGER NOT NULL DEFAULT 0
       )
     ''');
-  }
 }

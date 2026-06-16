@@ -107,7 +107,8 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       }
-
+      print('>>> funcionario.role: ${funcionario.role}');
+      print('>>> isAdmin: ${funcionario.role == UserRole.admin}');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -210,79 +211,79 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 40),
-Semantics(
+              Semantics(
                 label: 'Campo de usuário',
                 textField: true,
-              child:TextField(
-                controller: _usernameController,
-                style: const TextStyle(color: AppColors.brancoPuro),
-                decoration: InputDecoration(
-                  labelText: 'Usuário',
-                  labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.azulGelo,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.azulProfundo,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.cianoFrio,
-                      width: 1.5,
+                child: TextField(
+                  controller: _usernameController,
+                  style: const TextStyle(color: AppColors.brancoPuro),
+                  decoration: InputDecoration(
+                    labelText: 'Usuário',
+                    labelStyle: const TextStyle(color: AppColors.azulGelo),
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.azulGelo,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.azulProfundo,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.cianoFrio,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
               ),
-),
 
               const SizedBox(height: 16),
 
-            Semantics(
+              Semantics(
                 label: 'Campo de senha',
                 textField: true,
                 obscured: true,
                 child: TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                style: const TextStyle(color: AppColors.brancoPuro),
-                decoration: InputDecoration(
-                  labelText: 'Senha',
-                  labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(
-                    Icons.lock_outline,
-                    color: AppColors.azulGelo,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: AppColors.cinzaNeve,
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: AppColors.brancoPuro),
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    labelStyle: const TextStyle(color: AppColors.azulGelo),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.azulGelo,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.azulProfundo,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.cianoFrio,
-                      width: 1.5,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: AppColors.cinzaNeve,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.azulProfundo,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.cianoFrio,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
 
               // erro
               if (_error != null) ...[
@@ -302,35 +303,35 @@ Semantics(
                 label: _isLoading ? 'Carregando, aguarde' : 'Botão Entrar',
                 button: true,
                 child: SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cianoFrio,
-                    foregroundColor: AppColors.noiteArtica,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cianoFrio,
+                      foregroundColor: AppColors.noiteArtica,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.noiteArtica,
+                            ),
+                          )
+                        : const Text(
+                            'Entrar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.noiteArtica,
-                          ),
-                        )
-                      : const Text(
-                          'Entrar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                 ),
-              ),
               ),
             ],
           ),
