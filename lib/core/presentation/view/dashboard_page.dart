@@ -151,7 +151,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return  Center(
+       child: Semantics(
+        label: 'Nenhuma ordem de serviço registrada. As ordens destinadas a você aparecerão aqui.',
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -168,6 +170,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ],
       ),
+       ),
     );
   }
 
@@ -215,6 +218,9 @@ class _DashboardPageState extends State<DashboardPage> {
               };
               _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
             },
+            child: Semantics(
+    label: '${cfg.label}, $count ordens. ${isAtivo ? 'Filtro ativo' : 'Toque para filtrar'}',
+    button: true,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
@@ -236,6 +242,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       color: cfg.color,
                     ),
                   ),
+              
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -269,6 +276,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
+            ),
           );
         }).toList(),
       ),
@@ -301,6 +309,9 @@ class _DashboardPageState extends State<DashboardPage> {
               setState(() => _filtroAtivo = status);
               _animarRolagemAba(i);
             },
+            child: Semantics(
+              label: '$label${isAtivo ? ', selecionado' : ''}',
+              button: true,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -329,6 +340,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
+            ),
             ),
           );
         },
@@ -388,6 +400,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         );
       },
+      child: Semantics(
+        label: 'Ordem de serviço ${os.id}, técnico $nomeTecnico, status ${cfg.label}. Toque para abrir.',
+        button: true,
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -466,7 +481,9 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ),
+      ),
     );
+    
   }
 
   String _getIniciais(String nome) {
