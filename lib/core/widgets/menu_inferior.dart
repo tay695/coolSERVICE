@@ -6,9 +6,11 @@ import 'package:coolservice/freatures/funcionarios/presentation/view/funcionario
 import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_list_page.dart';
 import 'package:coolservice/freatures/servico/presentation/view/service_list_page.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view/login_page.dart';
+import 'package:coolservice/core/presentation/view/perfil_page.dart';
 import 'package:coolservice/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 
 class CadastrosHubPage extends StatelessWidget {
   final Funcionario funcionario;
@@ -43,7 +45,6 @@ class CadastrosHubPage extends StatelessWidget {
               );
             },
           ),
-
           if (isAdmin) ...[
             const SizedBox(height: 12),
             _buildHubCard(
@@ -61,20 +62,20 @@ class CadastrosHubPage extends StatelessWidget {
               },
             ),
           ],
-            const SizedBox(height: 12),
-            _buildHubCard(
-              context,
-              icon: Icons.handyman,
-              title: 'Serviços Prestados',
-              subtitle: 'Tabela de preços e tipos de serviços',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ServiceListPage(funcionario: funcionario),
-                  ),
-                );
-              },
-            ),
+          const SizedBox(height: 12),
+          _buildHubCard(
+            context,
+            icon: Icons.handyman,
+            title: 'Serviços Prestados',
+            subtitle: 'Tabela de preços e tipos de serviços',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ServiceListPage(funcionario: funcionario),
+                ),
+              );
+            },
+          ),
         ],
       ),
       bottomNavigationBar: MenuInferior(
@@ -138,6 +139,69 @@ class ConfiguracoesPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => PerfilPage(funcionario: funcionario),
+              ),
+            ),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              color: isDark ? AppColors.azulProfundo : AppColors.brancoPuro,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: AppColors.cianoFrio,
+                      child: Text(
+                        funcionario.name.isNotEmpty
+                            ? funcionario.name[0].toUpperCase()
+                            : '?',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.brancoPuro,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            funcionario.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            funcionario.role == UserRole.admin
+                                ? 'Administrador'
+                                : 'Funcionário',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.azulGelo,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.azulGelo),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -168,7 +232,6 @@ class ConfiguracoesPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -243,9 +306,9 @@ class MenuInferior extends StatelessWidget {
         destino = DashboardPage(funcionario: funcionario);
     }
 
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => destino));
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => destino),
+    );
   }
 
   @override
@@ -264,13 +327,8 @@ class MenuInferior extends StatelessWidget {
           label: 'Início',
         ),
         NavigationDestination(
-          icon: Icon(
-            Icons.app_registration_outlined,
-          ), // Icone mais focado em cadastros
-          selectedIcon: Icon(
-            Icons.app_registration,
-            color: AppColors.cianoFrio,
-          ),
+          icon: Icon(Icons.app_registration_outlined),
+          selectedIcon: Icon(Icons.app_registration, color: AppColors.cianoFrio),
           label: 'Cadastros',
         ),
         NavigationDestination(

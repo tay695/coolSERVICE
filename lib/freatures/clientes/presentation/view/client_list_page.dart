@@ -1,5 +1,4 @@
 import 'package:coolservice/core/widgets/menu_inferior.dart';
-import 'package:coolservice/freatures/clientes/presentation/view/client_profile_page.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/clientes/presentation/view/client_form_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
@@ -225,9 +224,8 @@ class _ClientListPageState extends State<ClientListPage> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => ClientFormPage(
-                                          client: c,
-                                        ),
+                                        builder: (_) =>
+                                            ClientFormPage(client: c),
                                       ),
                                     ).then(
                                       (_) => context

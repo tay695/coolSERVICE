@@ -10,6 +10,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:coolservice/core/services/notification_service.dart';
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/core/presentation/view/perfil_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final Funcionario funcionario;
@@ -139,7 +141,36 @@ class _DashboardPageState extends State<DashboardPage> {
               .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('CoolService')),
+      appBar: AppBar(
+        title: const Text('CoolService'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PerfilPage(funcionario: widget.funcionario),
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.cianoFrio,
+                child: Text(
+                  widget.funcionario.name.isNotEmpty
+                      ? widget.funcionario.name[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brancoPuro,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: MenuInferior(
         funcionario: widget.funcionario,
         currentIndex: 0,
@@ -396,7 +427,10 @@ class _DashboardPageState extends State<DashboardPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrdemServicoFormPage(osParaEditar: os),
+            builder: (_) => OrdemServicoFormPage(
+              osParaEditar: os,
+              funcionarioLogado: widget.funcionario,
+            ),
           ),
         );
       },

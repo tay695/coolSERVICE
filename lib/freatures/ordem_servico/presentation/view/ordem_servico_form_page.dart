@@ -1,4 +1,5 @@
 import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/freatures/clientes/presentation/view/client_profile_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
@@ -9,13 +10,13 @@ import 'package:provider/provider.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class OrdemServicoFormPage extends StatefulWidget {
-  // Verificação para ver se a OS será editada ou se é a criação de uma nova OS
   final OrdemServico? osParaEditar;
-  final Funcionario? funcionarioLogado;
+  final Funcionario funcionarioLogado;
+
   const OrdemServicoFormPage({
     super.key,
     this.osParaEditar,
-    this.funcionarioLogado,
+    required this.funcionarioLogado,
   });
 
   @override
@@ -641,19 +642,19 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
-            if (isEditing && isTecnicoAlocado) ...[
+            if (isEditing &&
+                widget.funcionarioLogado.role == UserRole.admin) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: widget.osParaEditar!.isPaid
                       ? Colors.green
-                      : Colors.red,
+                      : Colors.orange,
                   side: BorderSide(
                     color: widget.osParaEditar!.isPaid
                         ? Colors.green
-                        : Colors.red,
+                        : Colors.orange,
                     width: 1.5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -661,64 +662,38 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 12,
                   ),
                 ),
                 icon: Icon(
                   widget.osParaEditar!.isPaid
-                      ? Icons.check_circle_outline
-                      : Icons.pending_outlined,
-                  size: 16,
+                      ? Icons.check_circle_rounded
+                      : Icons.account_balance_wallet_rounded,
+                  size: 18,
                 ),
                 label: Text(
                   widget.osParaEditar!.isPaid
-                      ? 'Pagamento confirmado'
-                      : 'Pagamento pendente — confirmar',
+                      ? 'Pagamento Confirmado'
+                      : 'Ir para Perfil do Cliente — Baixar Débito',
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                onPressed: widget.osParaEditar!.isPaid
-                    ? null
-                    : () async {
-                        final confirmar = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            title: const Text('Confirmar pagamento'),
-                            content: const Text(
-                              'Confirma que o pagamento desta OS foi recebido?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancelar'),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Confirmar'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmar == true && context.mounted) {
-                          await context
-                              .read<OrdemServicoViewModel>()
-                              .alternarStatusPagamento(
-                                widget.osParaEditar!,
-                                true,
-                              );
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Pagamento confirmado!'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                            Navigator.pop(context);
-                          }
-                        }
-                      },
+                onPressed: () {
+                  final clienteDaOs = viewModelClientes.clients.firstWhere(
+                    (c) => c.id == widget.osParaEditar!.clientId,
+                  );
+
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ClientProfilePage(
+                        cliente: clienteDaOs,
+                        funcionarioLogado: widget.funcionarioLogado,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
             TextButton(

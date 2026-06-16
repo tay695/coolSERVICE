@@ -87,11 +87,10 @@ class _OrdemServicoListPageState extends State<OrdemServicoListPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              OrdemServicoFormPage(
-                                osParaEditar: os,
-                                funcionarioLogado: widget.funcionario,
-                                ),
+                          builder: (_) => OrdemServicoFormPage(
+                            osParaEditar: os,
+                            funcionarioLogado: widget.funcionario,
+                          ),
                         ),
                       );
                     },
@@ -201,7 +200,10 @@ class _OrdemServicoListPageState extends State<OrdemServicoListPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const OrdemServicoFormPage()),
+            MaterialPageRoute(
+              builder: (_) =>
+                  OrdemServicoFormPage(funcionarioLogado: widget.funcionario),
+            ),
           );
         },
       ),
