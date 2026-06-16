@@ -164,27 +164,30 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.azulProfundo,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.cianoFrio.withOpacity(0.4),
-                      blurRadius: 24,
-                      spreadRadius: 4,
+              Semantics(
+                label: 'Logo do CoolService',
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.azulProfundo,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cianoFrio.withOpacity(0.4),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 120,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.build_circle_outlined,
+                      size: 64,
+                      color: AppColors.cianoFrio,
                     ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 120,
-                  height: 120,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.build_circle_outlined,
-                    size: 64,
-                    color: AppColors.cianoFrio,
                   ),
                 ),
               ),
@@ -207,8 +210,10 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 40),
-
-              TextField(
+Semantics(
+                label: 'Campo de usuário',
+                textField: true,
+              child:TextField(
                 controller: _usernameController,
                 style: const TextStyle(color: AppColors.brancoPuro),
                 decoration: InputDecoration(
@@ -233,10 +238,15 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+),
 
               const SizedBox(height: 16),
 
-              TextField(
+            Semantics(
+                label: 'Campo de senha',
+                textField: true,
+                obscured: true,
+                child: TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 style: const TextStyle(color: AppColors.brancoPuro),
@@ -272,6 +282,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+            ),
 
               // erro
               if (_error != null) ...[
@@ -287,7 +298,10 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 32),
 
-              SizedBox(
+              Semantics(
+                label: _isLoading ? 'Carregando, aguarde' : 'Botão Entrar',
+                button: true,
+                child: SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
@@ -316,6 +330,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                 ),
+              ),
               ),
             ],
           ),

@@ -99,6 +99,16 @@ class MyApp extends StatelessWidget {
     final configViewModel = context.watch<AppConfigViewModel>();
 
     return MaterialApp(
+       builder: (context, child) {
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(
+          MediaQuery.of(context).textScaler.scale(1.0).clamp(0.8, 1.3),
+        ),
+      ),
+      child: child!,
+    );
+  },
       title: 'CoolService',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
