@@ -9,7 +9,7 @@ class FuncionarioModel extends Funcionario {
     required super.phone,
     required super.role,
     required super.isActive,
-    required super.username, 
+    required super.username,
     required super.passwordHash,
   });
 
@@ -35,7 +35,10 @@ class FuncionarioModel extends Funcionario {
       especialty: map['especialty'] ?? '',
       phone: map['phone'] ?? '',
       isActive: map['isActive'] == 1,
-      role: UserRole.values.byName(map['role'] ?? 'employee'),
+      role: UserRole.values.firstWhere(
+        (r) => r.name == (map['role'] ?? 'funcionario'),
+        orElse: () => UserRole.funcionario,
+      ),
       username: map['username'] ?? '',
       passwordHash: map['password_hash'] ?? '',
     );

@@ -2,6 +2,7 @@ import 'package:coolservice/core/widgets/menu_inferior.dart';
 import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
+import 'package:coolservice/freatures/ordem_servico/presentation/view/ordem_servico_form_page.dart';
 import 'package:coolservice/freatures/ordem_servico/presentation/view_model/ordem_servico_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:coolservice/core/services/notification_service.dart';
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/core/presentation/view/perfil_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final Funcionario funcionario;
@@ -20,40 +23,54 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  bool get isAdmin => widget.funcionario.role == UserRole.admin;
   OrderStatus? _filtroAtivo;
+
   final ScrollController _tabsScrollController = ScrollController();
   StreamSubscription? _osListener;
 
   @override
-void initState() {
-  super.initState();
-  _iniciarListenerOS();
-}
+  void initState() {
+    super.initState();
+    _iniciarListenerOS();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FuncionarioViewModel>().listAllFromFirestore();
+      context.read<OrdemServicoViewModel>().carregarOrdensPorFuncionario(
+        widget.funcionario.id,
+        isAdmin: isAdmin,
+      );
+    });
+  }
 
-void _iniciarListenerOS() {
-  final funcionarioId = widget.funcionario.id;
-  
-  _osListener = FirebaseFirestore.instance
-      .collection('ordens_servico')
-      .where('employeeId', isEqualTo: funcionarioId)
-      .snapshots()
-      .listen((snapshot) {
-    for (final change in snapshot.docChanges) {
-      if (change.type == DocumentChangeType.added) {
-        NotificationService.showLocalNotification(
-          // cria mensagem fake para exibir
-          RemoteMessage(
-            notification: RemoteNotification(
-              title: 'Nova Ordem de Serviço',
-              body: 'Você foi alocado em uma nova OS.',
-            ),
-          ),
-        );
-      }
+  void _iniciarListenerOS() {
+    bool primeiraLeitura = true;
+
+    Query query = FirebaseFirestore.instance.collection('ordens_servico');
+    if (!isAdmin) {
+      query = query.where('employeeId', isEqualTo: widget.funcionario.id);
     }
-  });
-}
 
+    _osListener = query.snapshots().listen((snapshot) {
+      if (primeiraLeitura) {
+        primeiraLeitura = false;
+        return;
+      }
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          NotificationService.showLocalNotification(
+            RemoteMessage(
+              notification: RemoteNotification(
+                title: 'Nova Ordem de Serviço',
+                body: isAdmin
+                    ? 'Uma nova OS foi registrada no sistema.'
+                    : 'Você foi alocado em uma nova OS.',
+              ),
+            ),
+          );
+        }
+      }
+    });
+  }
 
   static const _statusConfig = {
     OrderStatus.aberto: _StatusConfig(
@@ -86,22 +103,18 @@ void _iniciarListenerOS() {
     ),
   };
 
-@override
-void dispose() {
-  _osListener?.cancel();
-  _tabsScrollController.dispose();
-  super.dispose();
-}
+  @override
+  void dispose() {
+    _osListener?.cancel();
+    _tabsScrollController.dispose();
+    super.dispose();
+  }
 
   void _animarRolagemAba(int index) {
     if (_tabsScrollController.hasClients) {
       double posicaoDestino = index * 95.0;
       final maxScroll = _tabsScrollController.position.maxScrollExtent;
-
-      if (posicaoDestino > maxScroll) {
-        posicaoDestino = maxScroll;
-      }
-
+      if (posicaoDestino > maxScroll) posicaoDestino = maxScroll;
       _tabsScrollController.animateTo(
         posicaoDestino,
         duration: const Duration(milliseconds: 300),
@@ -113,56 +126,165 @@ void dispose() {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<OrdemServicoViewModel>();
-    final ordens = viewModel.ordens;
+    final funcionarioViewModel = context.watch<FuncionarioViewModel>();
+    final ordensAtrasadas = viewModel.ordensComPagamentoAtrasado;
+
+    final ordensDoUsuario = isAdmin
+        ? viewModel.ordens
+        : viewModel.ordens
+              .where(
+                (os) =>
+                    os.employeeId == widget.funcionario.id ||
+                    os.technicianId == widget.funcionario.id,
+              )
+              .toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('CoolService')),
+      appBar: AppBar(
+        title: const Text('CoolService'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PerfilPage(funcionario: widget.funcionario),
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.cianoFrio,
+                child: Text(
+                  widget.funcionario.name.isNotEmpty
+                      ? widget.funcionario.name[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brancoPuro,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: MenuInferior(
         funcionario: widget.funcionario,
         currentIndex: 0,
       ),
-      body: ordens.isEmpty ? _buildEmptyState() : _buildDashboard(ordens),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
         children: [
-          Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'Nenhuma Ordem de Serviço registrada.',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Cadastre uma nova OS para ver as estatísticas.',
-            style: TextStyle(color: Colors.grey),
+          if (isAdmin && ordensAtrasadas.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                border: Border.all(
+                  color: Colors.red.withOpacity(0.5),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                        size: 24,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'ALERTA DE PAGAMENTOS ATRASADOS',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Existem ${ordensAtrasadas.length} ordem(ns) de serviço aguardando pagamento além do prazo tolerado.',
+                    style: TextStyle(color: Colors.red[800], fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 40),
+                    ),
+                    icon: const Icon(Icons.visibility, size: 16),
+                    label: const Text('Ver clientes inadimplentes'),
+                    onPressed: () =>
+                        _mostrarListaDeAtrasados(context, ordensAtrasadas),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: ordensDoUsuario.isEmpty
+                ? _buildEmptyState()
+                : _buildDashboard(ordensDoUsuario, funcionarioViewModel),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDashboard(List<OrdemServico> ordens) {
-    final ordensFiltradas = _filtroAtivo == null
+  Widget _buildEmptyState() {
+    return Center(
+      child: Semantics(
+        label:
+            'Nenhuma ordem de serviço registrada. As ordens destinadas a você aparecerão aqui.',
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 80, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'Nenhuma Ordem de Serviço registrada.',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'As ordens destinadas a você aparecerão aqui.',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashboard(List<OrdemServico> ordens, FuncionarioViewModel fVM) {
+    final osViewModel = context.read<OrdemServicoViewModel>();
+    final ordensFiltradasPeloStatus = _filtroAtivo == null
         ? ordens
         : ordens.where((os) => os.status == _filtroAtivo).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildIndicadores(ordens),
+        _buildIndicadores(ordens, osViewModel),
         _buildFiltroTabs(),
         const Divider(height: 1),
-        Expanded(child: _buildListaOS(ordensFiltradas)),
+        Expanded(child: _buildListaOS(ordensFiltradasPeloStatus, fVM)),
       ],
     );
   }
 
-  Widget _buildIndicadores(List<OrdemServico> ordens) {
+  Widget _buildIndicadores(
+    List<OrdemServico> ordens,
+    OrdemServicoViewModel vModel,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: GridView.count(
@@ -179,70 +301,86 @@ void dispose() {
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _filtroAtivo = isAtivo ? null : entry.key;
-              });
-              final mapaIndexes = {
-                OrderStatus.aberto: 1,
-                OrderStatus.encaminhada: 2,
-                OrderStatus.pedentes: 3,
-                OrderStatus.completo: 4,
-              };
-              _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
+              if (entry.key == OrderStatus.pedentes &&
+                  isAdmin &&
+                  vModel.ordensComPagamentoAtrasado.isNotEmpty) {
+                _mostrarListaDeAtrasados(
+                  context,
+                  vModel.ordensComPagamentoAtrasado,
+                );
+              } else {
+                setState(() {
+                  _filtroAtivo = isAtivo ? null : entry.key;
+                });
+                final mapaIndexes = {
+                  OrderStatus.aberto: 1,
+                  OrderStatus.encaminhada: 2,
+                  OrderStatus.pedentes: 3,
+                  OrderStatus.completo: 4,
+                };
+                _animarRolagemAba(isAtivo ? 0 : (mapaIndexes[entry.key] ?? 0));
+              }
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              decoration: BoxDecoration(
-                color: cfg.bgColor,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isAtivo ? cfg.color : cfg.color.withOpacity(0.25),
-                  width: isAtivo ? 1.5 : 0.5,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: cfg.color,
-                    ),
+            child: Semantics(
+              label:
+                  '${cfg.label}, $count ordens. ${isAtivo ? 'Filtro ativo' : 'Toque para filtrar'}',
+              button: true,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  color: cfg.bgColor,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isAtivo ? cfg.color : cfg.color.withOpacity(0.25),
+                    width: isAtivo ? 1.5 : 0.5,
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          cfg.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: cfg.textColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        // impede o número de quebrar ou vazar se for muito grande
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '$count',
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: cfg.color,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            cfg.label,
                             style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
                               color: cfg.textColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '$count',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: cfg.textColor,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -274,35 +412,42 @@ void dispose() {
 
           return GestureDetector(
             onTap: () {
-              setState(() => _filtroAtivo = status);
-              _animarRolagemAba(i);
+              setState(() => _filtroAtivo = isAtivo ? null : status);
+              _animarRolagemAba(isAtivo ? 0 : i);
             },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: isAtivo
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(99),
-                border: Border.all(
+            child: Semantics(
+              label: '$label${isAtivo ? ', selecionado' : ''}',
+              button: true,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
                   color: isAtivo
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.withOpacity(0.35),
-                  width: 0.5,
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(
+                    color: isAtivo
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.grey.withOpacity(0.35),
+                    width: 0.5,
+                  ),
                 ),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isAtivo
-                      ? Colors.white
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: isAtivo
+                        ? Colors.white
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
                 ),
               ),
             ),
@@ -312,7 +457,7 @@ void dispose() {
     );
   }
 
-  Widget _buildListaOS(List<OrdemServico> ordens) {
+  Widget _buildListaOS(List<OrdemServico> ordens, FuncionarioViewModel fVM) {
     if (ordens.isEmpty) {
       return const Center(
         child: Column(
@@ -333,21 +478,17 @@ void dispose() {
       padding: const EdgeInsets.all(16),
       itemCount: ordens.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, i) => _buildOSItem(ordens[i]),
+      itemBuilder: (context, i) => _buildOSItem(ordens[i], fVM),
     );
   }
 
-  Widget _buildOSItem(OrdemServico os) {
+  Widget _buildOSItem(OrdemServico os, FuncionarioViewModel fVM) {
     final cfg = _statusConfig[os.status]!;
-
     String nomeTecnico = 'Sem Técnico';
 
-    if (os.employeeId != null && os.employeeId!.isNotEmpty) {
+    if (os.employeeId.isNotEmpty) {
       try {
-        final funcionarioViewModel = context.read<FuncionarioViewModel>();
-        final tec = funcionarioViewModel.funcionarios.firstWhere(
-          (f) => f.id == os.employeeId,
-        );
+        final tec = fVM.funcionarios.firstWhere((f) => f.id == os.employeeId);
         nomeTecnico = tec.name;
       } catch (_) {
         nomeTecnico = 'Técnico Não Encontrado';
@@ -356,82 +497,105 @@ void dispose() {
 
     final iniciaisTecnico = _getIniciais(nomeTecnico);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5),
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrdemServicoFormPage(
+            osParaEditar: os,
+            funcionarioLogado: widget.funcionario,
+          ),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              iniciaisTecnico,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+      child: Semantics(
+        label:
+            'Ordem de serviço ${os.id}, técnico $nomeTecnico, status ${cfg.label}. Toque para abrir.',
+        button: true,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.15),
+              width: 0.5,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'OS-${os.id}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.3),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Cliente: ${os.clientId}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  overflow: TextOverflow.ellipsis,
+                alignment: Alignment.center,
+                child: Text(
+                  iniciaisTecnico,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-                Text(
-                  'Téc: $nomeTecnico',
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'OS-${os.id}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Cliente: ${os.clientId}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Téc: $nomeTecnico',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cfg.bgColor,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Text(
+                  cfg.label,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w500,
+                    color: cfg.textColor,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: cfg.bgColor,
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              cfg.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: cfg.textColor,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -441,6 +605,62 @@ void dispose() {
     if (partes.isEmpty) return '?';
     if (partes.length == 1) return partes[0][0].toUpperCase();
     return (partes[0][0] + partes[1][0]).toUpperCase();
+  }
+
+  void _mostrarListaDeAtrasados(
+    BuildContext context,
+    List<OrdemServico> ordensAtrasadas,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ordens em Atraso',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: ordensAtrasadas.length,
+                itemBuilder: (context, index) {
+                  final os = ordensAtrasadas[index];
+                  return ListTile(
+                    leading: const Icon(Icons.money_off, color: Colors.red),
+                    title: Text('OS #${os.id}'),
+                    subtitle: Text(
+                      'Valor a receber: R\$ ${os.totalValue.toStringAsFixed(2)}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => OrdemServicoFormPage(
+                            osParaEditar: os,
+                            funcionarioLogado: widget.funcionario,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

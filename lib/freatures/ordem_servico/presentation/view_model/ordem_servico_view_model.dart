@@ -4,22 +4,42 @@ import 'package:coolservice/freatures/ordem_servico/domain/repositories/i_odem_s
 import 'package:coolservice/freatures/ordem_servico/domain/usecases/calc_km_fee_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:coolservice/core/services/notification_service.dart';
 
 class OrdemServicoViewModel extends ChangeNotifier {
   final IOrdemServicoRepository repository;
+  final int prazoPagamentoDias = 1;
   final PreferencesService preferencesService;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final List<OrdemServico> _ordens = [];
   List<OrdemServico> get ordens => _ordens;
 
   double _taxaKm = 2.50;
   double get taxaKm => _taxaKm;
-
   OrdemServicoViewModel({
     required this.repository,
     required this.preferencesService,
   });
+  List<OrdemServico> get ordensComPagamentoAtrasado {
+    final agora = DateTime.now();
+    print('Total de ordens: ${_ordens.length}');
+    for (final os in _ordens) {
+      print(
+        'OS ${os.id} | status: ${os.status} | isPaid: ${os.isPaid} | outData: ${os.dataConclusao}',
+      );
+    }
+    return _ordens.where((os) {
+      if (os.isPaid) return false;
+      if (os.status != OrderStatus.pedentes) return false;
+      if (os.dataCriacao == null) return false;
+      final dataLimite = os.dataConclusao!.add(
+        Duration(days: prazoPagamentoDias),
+      );
+      return agora.isAfter(dataLimite);
+    }).toList();
+  }
 
   Future<void> updateTaxaKm(double novaTaxa) async {
     _taxaKm = novaTaxa;
@@ -27,14 +47,165 @@ class OrdemServicoViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _ensureFirebaseAuth() async {}
+
   Future<void> carregarOrdens() async {
     try {
+      // carrega local primeiro
       final listaDoBanco = await repository.listAll();
       _ordens.clear();
       _ordens.addAll(listaDoBanco);
       notifyListeners();
+
+      //sincroniza com Firestore
+      await _ensureFirebaseAuth();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('ordens_servico')
+          .orderBy('criadoEm', descending: true)
+          .get();
+      print('Firestore retornou: ${snapshot.docs.length} ordens');
+
+      if (snapshot.docs.isEmpty) return;
+
+      if (snapshot.docs.isEmpty) return;
+
+      final ordensFirestore = snapshot.docs.map((doc) {
+        final d = doc.data();
+        return OrdemServico(
+          id: d['id'],
+          clientId: d['clientId'],
+          employeeId: d['employeeId'],
+          technicianId: d['technicianId'],
+          status: _parseStatus(d['status']),
+          tipoAtendimento: TipoAtendimento.values.firstWhere(
+            (t) => t.name == d['tipoAtendimento'],
+            orElse: () => TipoAtendimento.manutencao,
+          ),
+          isExternal: d['isExternal'] ?? false,
+          kmDistance: (d['kmDistance'] ?? 0).toDouble(),
+          serviceBasePrice: (d['serviceBasePrice'] ?? 0).toDouble(),
+          kmFee: (d['kmFee'] ?? 0).toDouble(),
+          totalValue: (d['totalValue'] ?? 0).toDouble(),
+          observations: d['observations'],
+          isPaid: d['isPaid'] ?? false,
+          dataCriacao: d['dataCriacao'] != null
+              ? (d['dataCriacao'] as Timestamp).toDate()
+              : null,
+          dataConclusao: d['dataConclusao'] != null
+              ? (d['dataConclusao'] as Timestamp).toDate()
+              : null,
+        );
+      }).toList();
+      print('OS carregada: ${ordensFirestore.length}');
+
+      for (final os in ordensFirestore) {
+        await repository.save(os);
+      }
+
+      _ordens.clear();
+      _ordens.addAll(ordensFirestore);
+      notifyListeners();
     } catch (e) {
-      print("Erro ao carregar ordens do banco: $e");
+      print('Erro ao carregar ordens: $e');
+    }
+  }
+
+  OrderStatus _parseStatus(String? value) {
+    switch (value) {
+      case 'completed':
+        return OrderStatus.completo;
+      case 'completo':
+        return OrderStatus.completo;
+      case 'encaminhada':
+        return OrderStatus.encaminhada;
+      case 'inProgress':
+        return OrderStatus.encaminhada;
+      case 'pedentes':
+        return OrderStatus.pedentes;
+      case 'paymentPending':
+        return OrderStatus.pedentes;
+      case 'cancelados':
+        return OrderStatus.cancelados;
+      case 'cancelled':
+        return OrderStatus.cancelados;
+      case 'open':
+        return OrderStatus.aberto;
+      case 'aberto':
+        return OrderStatus.aberto;
+      default:
+        return OrderStatus.aberto;
+    }
+  }
+
+  Future<void> carregarOrdensPorFuncionario(
+    String funcionarioId, {
+    bool isAdmin = false,
+  }) async {
+    try {
+      final listaDoBanco = await repository.listAll();
+      final ordensFiltradas = isAdmin
+          ? listaDoBanco
+          : listaDoBanco
+                .where(
+                  (os) =>
+                      os.employeeId == funcionarioId ||
+                      os.technicianId == funcionarioId,
+                )
+                .toList();
+
+      _ordens.clear();
+      _ordens.addAll(ordensFiltradas);
+      notifyListeners();
+
+      await _ensureFirebaseAuth();
+
+      Query query = FirebaseFirestore.instance
+          .collection('ordens_servico')
+          .orderBy('criadoEm', descending: true);
+
+      if (!isAdmin) {
+        query = query.where('employeeId', isEqualTo: funcionarioId);
+      }
+
+      final snapshot = await query.get();
+      print('docs encontrados no Firestore: ${snapshot.docs.length}');
+
+      // 3. Só substitui se Firestore trouxer dados
+      if (snapshot.docs.isEmpty) return;
+
+      final ordensFirestore = snapshot.docs.map((doc) {
+        final d = doc.data() as Map<String, dynamic>;
+        return OrdemServico(
+          id: d['id'] ?? doc.id,
+          clientId: d['clientId'] ?? '',
+          employeeId: d['employeeId'] ?? '',
+          technicianId: d['technicianId'],
+          status: _parseStatus(d['status']),
+          tipoAtendimento: TipoAtendimento.values.firstWhere(
+            (t) => t.name == d['tipoAtendimento'],
+            orElse: () => TipoAtendimento.manutencao,
+          ),
+          isExternal: d['isExternal'] ?? false,
+          kmDistance: (d['kmDistance'] ?? 0).toDouble(),
+          serviceBasePrice: (d['serviceBasePrice'] ?? 0).toDouble(),
+          kmFee: (d['kmFee'] ?? 0).toDouble(),
+          totalValue: (d['totalValue'] ?? 0).toDouble(),
+          observations: d['observations'],
+          isPaid: d['isPaid'] ?? false,
+          dataCriacao: d['dataCriacao'] != null
+              ? (d['dataCriacao'] as Timestamp).toDate()
+              : null,
+          dataConclusao: d['dataConclusao'] != null
+              ? (d['dataConclusao'] as Timestamp).toDate()
+              : null,
+        );
+      }).toList();
+
+      _ordens.clear();
+      _ordens.addAll(ordensFirestore);
+      notifyListeners();
+    } catch (e) {
+      print('Erro ao carregar ordens por funcionário: $e');
     }
   }
 
@@ -70,40 +241,44 @@ class OrdemServicoViewModel extends ChangeNotifier {
         equipamentoAvaliado: novaOS.equipamentoAvaliado,
         diagnostico: novaOS.diagnostico,
         solucaoRecomendada: novaOS.solucaoRecomendada,
+        dataCriacao: novaOS.dataCriacao,
+        dataConclusao: novaOS.dataConclusao,
         isPaid: novaOS.isPaid,
       );
 
       await repository.save(osCompletaComValores);
       // Salva no Firestore
-try {
-  await FirebaseFirestore.instance
-      .collection('ordens_servico')
-      .doc(osCompletaComValores.id)
-      .set({
-    'id': osCompletaComValores.id,
-    'clientId': osCompletaComValores.clientId,
-    'employeeId': osCompletaComValores.employeeId,
-    'technicianId': osCompletaComValores.technicianId,
-    'status': osCompletaComValores.status.name,
-    'tipoAtendimento': osCompletaComValores.tipoAtendimento.name,
-    'isExternal': osCompletaComValores.isExternal,
-    'kmDistance': osCompletaComValores.kmDistance,
-    'serviceBasePrice': osCompletaComValores.serviceBasePrice,
-    'kmFee': osCompletaComValores.kmFee,
-    'totalValue': osCompletaComValores.totalValue,
-    'observations': osCompletaComValores.observations,
-    'criadoEm': FieldValue.serverTimestamp(),
-  });
-} catch (e) {
-  print('Erro ao salvar OS no Firestore: $e');
-}
+      try {
+        await FirebaseFirestore.instance
+            .collection('ordens_servico')
+            .doc(osCompletaComValores.id)
+            .set({
+              'id': osCompletaComValores.id,
+              'clientId': osCompletaComValores.clientId,
+              'employeeId': osCompletaComValores.employeeId,
+              'technicianId': osCompletaComValores.technicianId,
+              'status': osCompletaComValores.status.name,
+              'tipoAtendimento': osCompletaComValores.tipoAtendimento.name,
+              'isExternal': osCompletaComValores.isExternal,
+              'kmDistance': osCompletaComValores.kmDistance,
+              'serviceBasePrice': osCompletaComValores.serviceBasePrice,
+              'kmFee': osCompletaComValores.kmFee,
+              'totalValue': osCompletaComValores.totalValue,
+              'observations': osCompletaComValores.observations,
+              'dataCriacao': osCompletaComValores.dataCriacao,
+              'dataConclusao': osCompletaComValores.dataConclusao,
+              'isPaid': osCompletaComValores.isPaid,
+            });
+      } catch (e) {
+        print('Erro ao salvar OS no Firestore: $e');
+      }
       try {
         final funcionarioDoc = await FirebaseFirestore.instance
-        .collection('funcionarios')
-        .where('id', isEqualTo: osCompletaComValores.employeeId)
-        .limit(1)
-        .get();
-        
+            .collection('funcionarios')
+            .where('id', isEqualTo: osCompletaComValores.employeeId)
+            .limit(1)
+            .get();
+
         if (funcionarioDoc.docs.isNotEmpty) {
           final fcmToken = funcionarioDoc.docs.first.data()['fcmToken'];
           if (fcmToken != null) {
@@ -111,12 +286,12 @@ try {
               token: fcmToken,
               title: 'Nova Ordem de Serviço',
               body: 'Você foi alocado em uma nova OS.',
-              );
-              }
-              }
-              } catch (e) {
-                 print('Erro ao enviar notificação: $e');
-                 }
+            );
+          }
+        }
+      } catch (e) {
+        print('Erro ao enviar notificação: $e');
+      }
 
       _ordens.removeWhere((os) => os.id == osCompletaComValores.id);
       _ordens.add(osCompletaComValores);
@@ -156,10 +331,20 @@ try {
         equipamentoAvaliado: osOriginal.equipamentoAvaliado,
         diagnostico: osOriginal.diagnostico,
         solucaoRecomendada: osOriginal.solucaoRecomendada,
+        dataCriacao: osOriginal.dataCriacao,
+        dataConclusao: osOriginal.dataConclusao,
         isPaid: novoStatusPagamento,
       );
 
       await repository.save(osAtualizada);
+      try {
+        await FirebaseFirestore.instance
+            .collection('ordens_servico')
+            .doc(osAtualizada.id)
+            .update({'isPaid': novoStatusPagamento});
+      } catch (e) {
+        print('Erro ao atualizar pagamento no Firestore: $e');
+      }
 
       _ordens.removeWhere((os) => os.id == osAtualizada.id);
       _ordens.add(osAtualizada);
@@ -195,5 +380,21 @@ try {
   ) async {
     final useCase = CalcKmFeeUseCase(taxaPorKm: _taxaKm);
     return await useCase.executar(enderecoCliente, city, state);
+  }
+
+  Future<void> excluirOrdemServico(String idOS) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('ordens_servico')
+          .doc(idOS)
+          .delete();
+
+      _ordens.removeWhere((os) => os.id == idOS);
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Erro ao excluir OS: $e");
+      rethrow;
+    }
   }
 }

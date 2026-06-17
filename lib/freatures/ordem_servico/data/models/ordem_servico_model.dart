@@ -22,6 +22,8 @@ class OrdemServicoModel extends OrdemServico {
     super.equipamentoAvaliado,
     super.diagnostico,
     super.solucaoRecomendada,
+    super.dataCriacao,
+    super.dataConclusao,
     required super.isPaid,
   });
 
@@ -48,6 +50,8 @@ class OrdemServicoModel extends OrdemServico {
       'diagnostico': diagnostico,
       'solucaoRecomendada': solucaoRecomendada,
       'isPaid': isPaid ? 1 : 0,
+      'dataCriacao': dataCriacao?.toIso8601String(),
+      'dataConclusao': dataConclusao?.toIso8601String(),
     };
   }
 
@@ -76,6 +80,12 @@ class OrdemServicoModel extends OrdemServico {
       diagnostico: map['diagnostico'],
       solucaoRecomendada: map['solucaoRecomendada'],
       isPaid: map['isPaid'] == 1,
+      dataCriacao: map['dataCriacao'] != null
+          ? DateTime.tryParse(map['dataCriacao'])
+          : null,
+      dataConclusao: map['dataConclusao'] != null
+          ? DateTime.tryParse(map['dataConclusao'])
+          : null,
     );
   }
 }

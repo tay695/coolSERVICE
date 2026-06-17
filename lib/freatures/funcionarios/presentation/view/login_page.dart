@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:coolservice/core/services/notification_service.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,19 +44,52 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
-      
+
       final repo = SQLiteFuncionarioRepository();
       final todos = await repo.listAll();
 
-      final funcionario = todos.cast<Funcionario?>().firstWhere(
+      Funcionario? funcionario = todos.cast<Funcionario?>().firstWhere(
         (f) => f!.username == username,
         orElse: () => null,
       );
 
+      // Se não achou no SQLite, busca no Firestore e salva localmente
+      if (funcionario == null) {
+        try {
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid != null) {
+            final doc = await FirebaseFirestore.instance
+                .collection('funcionarios')
+                .doc(uid)
+                .get();
+            if (doc.exists) {
+              final d = doc.data()!;
+              funcionario = Funcionario(
+                id: d['id'] ?? uid,
+                name: d['name'] ?? '',
+                cpf: d['cpf'] ?? '',
+                especialty: d['especialty'] ?? '',
+                phone: d['phone'] ?? '',
+                role: UserRole.values.firstWhere(
+                  (r) => r.name == d['role'],
+                  orElse: () => UserRole.funcionario,
+                ),
+                isActive: d['isActive'] ?? true,
+                username: d['username'] ?? username,
+                passwordHash: '',
+                firebaseUid: uid,
+                fcmToken: d['fcmToken'],
+              );
+              await repo.save(funcionario);
+            }
+          }
+        } catch (_) {}
+      }
+
       setState(() => _isLoading = false);
 
       if (funcionario == null) {
-        setState(() => _error = 'Usuário não encontrado localmente.');
+        setState(() => _error = 'Usuário não encontrado.');
         return;
       }
 
@@ -65,20 +99,20 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
       if (funcionario.firebaseUid != null) {
-         final token = await NotificationService.getToken();
-         if (token != null) {
-           await context.read<FuncionarioViewModel>().saveFcmToken(
-             funcionario.firebaseUid!,
-             token,
-           );
-         }
-       }
-     
-
+        final token = await NotificationService.getToken();
+        if (token != null) {
+          await context.read<FuncionarioViewModel>().saveFcmToken(
+            funcionario.firebaseUid!,
+            token,
+          );
+        }
+      }
+      print('>>> funcionario.role: ${funcionario.role}');
+      print('>>> isAdmin: ${funcionario.role == UserRole.admin}');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => DashboardPage(funcionario: funcionario),
+          builder: (_) => DashboardPage(funcionario: funcionario!),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -104,9 +138,7 @@ class _LoginPageState extends State<LoginPage> {
     final todos = await repo.listAll();
 
     final funcionario = todos.cast<Funcionario?>().firstWhere(
-      (f) =>
-          f!.username == username &&
-          f.passwordHash == hashSenha(password),
+      (f) => f!.username == username && f.passwordHash == hashSenha(password),
       orElse: () => null,
     );
 
@@ -133,27 +165,30 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.azulProfundo,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.cianoFrio.withOpacity(0.4),
-                      blurRadius: 24,
-                      spreadRadius: 4,
+              Semantics(
+                label: 'Logo do CoolService',
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.azulProfundo,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cianoFrio.withOpacity(0.4),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 120,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.build_circle_outlined,
+                      size: 64,
+                      color: AppColors.cianoFrio,
                     ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 120,
-                  height: 120,
-                  errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.build_circle_outlined,
-                    size: 64,
-                    color: AppColors.cianoFrio,
                   ),
                 ),
               ),
@@ -176,28 +211,31 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 40),
-              
-              TextField(
-                controller: _usernameController,
-                style: const TextStyle(color: AppColors.brancoPuro),
-                decoration: InputDecoration(
-                  labelText: 'Usuário',
-                  labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(
-                    Icons.person_outline,
-                    color: AppColors.azulGelo,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.azulProfundo,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.cianoFrio,
-                      width: 1.5,
+              Semantics(
+                label: 'Campo de usuário',
+                textField: true,
+                child: TextField(
+                  controller: _usernameController,
+                  style: const TextStyle(color: AppColors.brancoPuro),
+                  decoration: InputDecoration(
+                    labelText: 'Usuário',
+                    labelStyle: const TextStyle(color: AppColors.azulGelo),
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.azulGelo,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.azulProfundo,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.cianoFrio,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -205,38 +243,43 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 16),
 
-              TextField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                style: const TextStyle(color: AppColors.brancoPuro),
-                decoration: InputDecoration(
-                  labelText: 'Senha',
-                  labelStyle: const TextStyle(color: AppColors.azulGelo),
-                  prefixIcon: const Icon(
-                    Icons.lock_outline,
-                    color: AppColors.azulGelo,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: AppColors.cinzaNeve,
+              Semantics(
+                label: 'Campo de senha',
+                textField: true,
+                obscured: true,
+                child: TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  style: const TextStyle(color: AppColors.brancoPuro),
+                  decoration: InputDecoration(
+                    labelText: 'Senha',
+                    labelStyle: const TextStyle(color: AppColors.azulGelo),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.azulGelo,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.azulProfundo,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.cianoFrio,
-                      width: 1.5,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: AppColors.cinzaNeve,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    filled: true,
+                    fillColor: AppColors.azulProfundo,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: AppColors.cianoFrio,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -256,34 +299,38 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 32),
 
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cianoFrio,
-                    foregroundColor: AppColors.noiteArtica,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              Semantics(
+                label: _isLoading ? 'Carregando, aguarde' : 'Botão Entrar',
+                button: true,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cianoFrio,
+                      foregroundColor: AppColors.noiteArtica,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.noiteArtica,
+                            ),
+                          )
+                        : const Text(
+                            'Entrar',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 22,
-                          width: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.noiteArtica,
-                          ),
-                        )
-                      : const Text(
-                          'Entrar',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                 ),
               ),
             ],

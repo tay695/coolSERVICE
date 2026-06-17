@@ -217,7 +217,26 @@ class _FuncionarioFormPageState extends State<FuncionarioFormPage> {
                       v!.isEmpty ? 'Informe a especialidade' : null,
                 ),
                 const SizedBox(height: 12),
-           
+                DropdownButtonFormField<UserRole>(
+                  value: _selectedRole,
+                  decoration: _fieldDecoration(
+                    'Cargo',
+                    icon: Icons.work_outline,
+                  ),
+                  items: [UserRole.admin, UserRole.funcionario]
+                      .map(
+                        (r) => DropdownMenuItem(
+                          value: r,
+                          child: Text(
+                            r == UserRole.admin
+                                ? 'Administrador'
+                                : 'Funcionário',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedRole = v!),
+                ),
               ],
             ),
 

@@ -1,4 +1,5 @@
 import 'package:coolservice/core/theme/app_theme.dart';
+import 'package:coolservice/freatures/clientes/presentation/view/client_profile_page.dart';
 import 'package:coolservice/freatures/clientes/presentation/view_model/client_view_model.dart';
 import 'package:coolservice/freatures/funcionarios/presentation/view_model/funcionario_viewModel.dart';
 import 'package:coolservice/freatures/ordem_servico/domain/entidades/ordem_servico.dart';
@@ -6,11 +7,17 @@ import 'package:coolservice/freatures/ordem_servico/presentation/view_model/orde
 import 'package:coolservice/freatures/servico/presentation/view_model/Service_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:coolservice/freatures/funcionarios/domain/entidades/funcionarios.dart';
 
 class OrdemServicoFormPage extends StatefulWidget {
-  // Verificação para ver se a OS será editada ou se é a criação de uma nova OS
   final OrdemServico? osParaEditar;
-  const OrdemServicoFormPage({super.key, this.osParaEditar});
+  final Funcionario funcionarioLogado;
+
+  const OrdemServicoFormPage({
+    super.key,
+    this.osParaEditar,
+    required this.funcionarioLogado,
+  });
 
   @override
   State<OrdemServicoFormPage> createState() => _OrdemServicoFormPageState();
@@ -30,6 +37,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
   TipoAtendimento _tipoSelecionado = TipoAtendimento.manutencao;
   OrderStatus _statusSelecionado = OrderStatus.aberto;
   bool _isExternal = false;
+  DateTime? _dataCriacao;
+  DateTime? _dataConclusao;
 
   final _basePriceController = TextEditingController();
   final _kmDistanceController = TextEditingController();
@@ -54,6 +63,8 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _funcionarioSelecionadoId = os.employeeId;
       _tipoSelecionado = os.tipoAtendimento;
       _statusSelecionado = os.status;
+      _dataCriacao = os.dataCriacao;
+      _dataConclusao = os.dataConclusao;
       _isExternal = os.isExternal;
 
       _basePriceController.text = os.serviceBasePrice.toString();
@@ -71,6 +82,9 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
       _diagnosticoController.text = os.diagnostico ?? '';
       _solucaoRecomendadaController.text = os.solucaoRecomendada ?? '';
       _statusSelecionado = os.status;
+    } else {
+      _dataCriacao = DateTime.now();
+      _dataConclusao = null;
     }
   }
 
@@ -216,12 +230,36 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final isEditing = widget.osParaEditar != null;
+    final bool isTecnicoAlocado =
+        isEditing &&
+        widget.funcionarioLogado?.id == widget.osParaEditar?.employeeId;
+    final bool podeEditar =
+        !isEditing ||
+        isTecnicoAlocado ||
+        widget.funcionarioLogado?.role == UserRole.admin;
+
+    debugPrint('=== PERMISSÃO ===');
+    debugPrint('funcionarioLogado.id: ${widget.funcionarioLogado?.id}');
+    debugPrint('os.employeeId: ${widget.osParaEditar?.employeeId}');
+    debugPrint('isTecnicoAlocado: $isTecnicoAlocado');
+    debugPrint('podeEditar: $podeEditar');
+    debugPrint('role: ${widget.funcionarioLogado?.role}');
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isEditing ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço',
-        ),
+        title: Text(widget.osParaEditar != null ? 'Editar OS' : 'Nova OS'),
+        actions: [
+          // Só mostra a lixeira se for uma edição e se quem está logado for Admin
+          if (widget.osParaEditar != null &&
+              widget.funcionarioLogado.role == UserRole.admin)
+            IconButton(
+              icon: const Icon(
+                Icons.delete_forever_rounded,
+                color: Colors.redAccent,
+              ),
+              onPressed: () => _confirmarExclusao(context),
+            ),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -270,7 +308,13 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
               label: 'Dados da OS',
               children: [
                 DropdownButtonFormField<String>(
-                  initialValue: _clienteSelecionadoId,
+                  isExpanded: true,
+                  initialValue:
+                      viewModelClientes.clients.any(
+                        (c) => c.id == _clienteSelecionadoId,
+                      )
+                      ? _clienteSelecionadoId
+                      : null,
                   decoration: _fieldDecoration('cliente *'),
                   items: viewModelClientes.clients
                       .map(
@@ -294,9 +338,18 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _funcionarioSelecionadoId,
+                  isExpanded: true,
+                  initialValue:
+                      viewModelFuncionarios.funcionarios.any(
+                        (f) => f.id == _funcionarioSelecionadoId,
+                      )
+                      ? _funcionarioSelecionadoId
+                      : null,
                   decoration: _fieldDecoration('funcionário/técnico'),
                   items: viewModelFuncionarios.funcionarios
+                      .where(
+                        (f) => f.isActive || f.id == _funcionarioSelecionadoId,
+                      )
                       .map(
                         (f) =>
                             DropdownMenuItem(value: f.id, child: Text(f.name)),
@@ -309,7 +362,13 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _servicoSelecionadoId,
+                  isExpanded: true,
+                  initialValue:
+                      viewModelServicos.services.any(
+                        (s) => s.id == _servicoSelecionadoId,
+                      )
+                      ? _servicoSelecionadoId
+                      : null,
                   decoration: _fieldDecoration('Serviço'),
                   items: viewModelServicos.services
                       .map(
@@ -338,6 +397,24 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                     }
                   },
                 ),
+                const SizedBox(height: 12),
+                if (isEditing) ...[
+                  DropdownButtonFormField<OrderStatus>(
+                    initialValue: _statusSelecionado,
+                    decoration: _fieldDecoration('Status da OS'),
+                    items: OrderStatus.values
+                        .map(
+                          (s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(s.name.toUpperCase()),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: podeEditar
+                        ? (val) => setState(() => _statusSelecionado = val!)
+                        : null,
+                  ),
+                ],
               ],
             ),
 
@@ -523,8 +600,60 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 12),
+            if (isEditing &&
+                widget.funcionarioLogado.role == UserRole.admin) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: widget.osParaEditar!.isPaid
+                      ? Colors.green
+                      : Colors.orange,
+                  side: BorderSide(
+                    color: widget.osParaEditar!.isPaid
+                        ? Colors.green
+                        : Colors.orange,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                icon: Icon(
+                  widget.osParaEditar!.isPaid
+                      ? Icons.check_circle_rounded
+                      : Icons.account_balance_wallet_rounded,
+                  size: 18,
+                ),
+                label: Text(
+                  widget.osParaEditar!.isPaid
+                      ? 'Pagamento Confirmado'
+                      : 'Dar baixa em Débito',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () {
+                  final clienteDaOs = viewModelClientes.clients.firstWhere(
+                    (c) => c.id == widget.osParaEditar!.clientId,
+                  );
+
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ClientProfilePage(
+                        cliente: clienteDaOs,
+                        funcionarioLogado: widget.funcionarioLogado,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text(
@@ -551,93 +680,210 @@ class _OrdemServicoFormPageState extends State<OrdemServicoFormPage> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    final cleanPriceText = _basePriceController.text
-                        .replaceAll('R\$ ', '')
-                        .trim();
-                    final basePrice = double.tryParse(cleanPriceText) ?? 0.0;
-                    final kmDist = _isExternal
-                        ? (double.tryParse(_kmDistanceController.text.trim()) ??
-                              0.0)
-                        : 0.0;
+                onPressed: !podeEditar
+                    ? null
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          final cleanPriceText = _basePriceController.text
+                              .replaceAll('R\$ ', '')
+                              .trim();
+                          final basePrice =
+                              double.tryParse(cleanPriceText) ?? 0.0;
+                          final kmDist = _isExternal
+                              ? (double.tryParse(
+                                      _kmDistanceController.text.trim(),
+                                    ) ??
+                                    0.0)
+                              : 0.0;
+                          final idOrdem = isEditing
+                              ? widget.osParaEditar!.id
+                              : DateTime.now().microsecondsSinceEpoch
+                                    .toString();
+                          if (isEditing &&
+                              _statusSelecionado == OrderStatus.completo &&
+                              _dataConclusao == null) {
+                            _dataConclusao = DateTime.now();
+                          }
 
-                    final idOrdem = isEditing
-                        ? widget.osParaEditar!.id
-                        : DateTime.now().millisecondsSinceEpoch.toString();
+                          final osPronta = OrdemServico(
+                            id: idOrdem,
+                            clientId: _clienteSelecionadoId!,
+                            employeeId: _funcionarioSelecionadoId!,
+                            technicianId: _funcionarioSelecionadoId,
+                            status: _statusSelecionado,
+                            tipoAtendimento: _tipoSelecionado,
+                            isExternal: _isExternal,
+                            kmDistance: kmDist,
+                            serviceBasePrice: basePrice,
+                            kmFee: 0.0,
+                            totalValue: 0.0,
+                            dataCriacao: isEditing
+                                ? widget.osParaEditar!.dataCriacao
+                                : DateTime.now(),
+                            dataConclusao:
+                                _statusSelecionado == OrderStatus.completo
+                                ? (widget.osParaEditar?.dataConclusao ??
+                                      DateTime.now())
+                                : null,
+                            observations:
+                                _observationsController.text.trim().isEmpty
+                                ? null
+                                : _observationsController.text.trim(),
+                            equipamento:
+                                _equipamentoController.text.trim().isEmpty
+                                ? null
+                                : _equipamentoController.text.trim(),
+                            tipoDefeito:
+                                _tipoDefeitoController.text.trim().isEmpty
+                                ? null
+                                : _tipoDefeitoController.text.trim(),
+                            modeloEquipamento:
+                                _modeloEquipamentoController.text.trim().isEmpty
+                                ? null
+                                : _modeloEquipamentoController.text.trim(),
+                            metragemAmbiente:
+                                _metragemAmbienteController.text.trim().isEmpty
+                                ? null
+                                : _metragemAmbienteController.text.trim(),
+                            tensaoEletrica:
+                                _tensaoEletricaController.text.trim().isEmpty
+                                ? null
+                                : _tensaoEletricaController.text.trim(),
+                            equipamentoAvaliado:
+                                _equipamentoAvaliadoController.text
+                                    .trim()
+                                    .isEmpty
+                                ? null
+                                : _equipamentoAvaliadoController.text.trim(),
+                            diagnostico:
+                                _diagnosticoController.text.trim().isEmpty
+                                ? null
+                                : _diagnosticoController.text.trim(),
+                            solucaoRecomendada:
+                                _solucaoRecomendadaController.text
+                                    .trim()
+                                    .isEmpty
+                                ? null
+                                : _solucaoRecomendadaController.text.trim(),
+                          );
 
-                    final osPronta = OrdemServico(
-                      id: idOrdem,
-                      clientId: _clienteSelecionadoId!,
-                      employeeId: _funcionarioSelecionadoId!,
-                      technicianId: _funcionarioSelecionadoId,
-                      status: _statusSelecionado,
-                      tipoAtendimento: _tipoSelecionado,
-                      isExternal: _isExternal,
-                      kmDistance: kmDist,
-                      serviceBasePrice: basePrice,
-                      kmFee: 0.0,
-                      totalValue: 0.0,
-                      observations: _observationsController.text.trim().isEmpty
-                          ? null
-                          : _observationsController.text.trim(),
-                      equipamento: _equipamentoController.text.trim().isEmpty
-                          ? null
-                          : _equipamentoController.text.trim(),
-                      tipoDefeito: _tipoDefeitoController.text.trim().isEmpty
-                          ? null
-                          : _tipoDefeitoController.text.trim(),
-                      modeloEquipamento:
-                          _modeloEquipamentoController.text.trim().isEmpty
-                          ? null
-                          : _modeloEquipamentoController.text.trim(),
-                      metragemAmbiente:
-                          _metragemAmbienteController.text.trim().isEmpty
-                          ? null
-                          : _metragemAmbienteController.text.trim(),
-                      tensaoEletrica:
-                          _tensaoEletricaController.text.trim().isEmpty
-                          ? null
-                          : _tensaoEletricaController.text.trim(),
-                      equipamentoAvaliado:
-                          _equipamentoAvaliadoController.text.trim().isEmpty
-                          ? null
-                          : _equipamentoAvaliadoController.text.trim(),
-                      diagnostico: _diagnosticoController.text.trim().isEmpty
-                          ? null
-                          : _diagnosticoController.text.trim(),
-                      solucaoRecomendada:
-                          _solucaoRecomendadaController.text.trim().isEmpty
-                          ? null
-                          : _solucaoRecomendadaController.text.trim(),
-                    );
+                          try {
+                            await context
+                                .read<OrdemServicoViewModel>()
+                                .salvarOrdem(
+                                  osPronta,
+                                  isPaid: isEditing
+                                      ? widget.osParaEditar!.isPaid
+                                      : false,
+                                );
 
-                    await context.read<OrdemServicoViewModel>().salvarOrdem(
-                      osPronta,
-                      isPaid: isEditing ? widget.osParaEditar!.isPaid : false,
-                    );
-
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isEditing
-                                ? 'Ordem atualizada com sucesso!'
-                                : 'Ordem de serviço cadastrada!',
-                          ),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                      Navigator.pop(context);
-                    }
-                  }
-                },
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isEditing
+                                        ? 'Ordem atualizada com sucesso!'
+                                        : 'Ordem de serviço cadastrada!',
+                                  ),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                              Navigator.pop(context);
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao salvar OS: $e'),
+                                  backgroundColor: Colors.red.shade700,
+                                ),
+                              );
+                            }
+                          }
+                        }
+                      },
               ),
             ),
             const SizedBox(height: 16),
           ],
         ),
       ),
+    );
+  }
+
+  void _confirmarExclusao(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Excluir OS'),
+            ],
+          ),
+          content: Text(
+            'Tem certeza que deseja apagar permanentemente a OS-${widget.osParaEditar!.id}? Esta ação não pode ser desfeita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext), // Fecha o modal
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                Navigator.pop(dialogContext); // Fecha o modal primeiro
+
+                // Exibe um loading simples na tela
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+
+                try {
+                  // Chama o ViewModel para apagar do banco
+                  await context
+                      .read<OrdemServicoViewModel>()
+                      .excluirOrdemServico(widget.osParaEditar!.id);
+
+                  if (context.mounted) {
+                    Navigator.pop(context); // Remove o loading
+                    Navigator.pop(context); // Volta para o Dashboard
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Ordem de serviço excluída com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.pop(context); // Remove o loading
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erro ao excluir: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text(
+                'Excluir',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
