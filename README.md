@@ -2,6 +2,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
 [![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 
 O **CoolService** é a solução definitiva para a Gestão de Ordens de Serviço (OS) e Atendimento. Desenvolvido para transformar a operação de prestadores de serviços e equipes técnicas, centralizando toda a gestão operacional diretamente na palma da mão.
 
